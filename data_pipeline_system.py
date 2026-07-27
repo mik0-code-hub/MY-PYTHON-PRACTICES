@@ -15,7 +15,7 @@ class DataPipeLine:
             },
             {   
                 'store_id':   'A12',
-                # Written by mik0-logic™S
+                # Written by mik0-logic™
                 'item':   'Mouse',
                 'quantity':   5,
                 'price':   5000,
