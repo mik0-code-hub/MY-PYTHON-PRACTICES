@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dangote Group | Providing Your Basic Needs Across Africa</title>
+  
+  <meta name="description" content="Dangote Industries Limited is Africa's premier manufacturing and industrial conglomerate, operating in Cement, Petroleum Refining, Fertiliser, Sugar, Salt, and Logistics across 10+ African nations." />
+  <meta name="keywords" content="Dangote Group, Dangote Refinery, Dangote Cement, Aliko Dangote, Nigerian Conglomerate, Petroleum, Fertilizer, Lekki Free Zone" />
+  <meta name="author" content="Dangote Industries Limited" />
+
+  <!-- OpenGraph / Social Meta -->
+  <meta property="og:title" content="Dangote Group | Touching Lives by Providing Basic Needs" />
+  <meta property="og:description" content="Africa's leading industrial powerhouse in Energy, Cement, Agro-Allied, and Infrastructure." />
+  <meta property="og:image" content="/assets/refinery_hero.jpg" />
+  <meta property="og:type" content="website" />
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="stylesheet" href="/css/components.css" />
+</head>
+<body>
+
+  <!-- ==================== TOP TICKER BAR ==================== -->
+  <div class="top-ticker-bar" id="topTickerBar">
+    <div class="container">
+      <div class="ticker-wrapper">
+        <div class="ticker-left">
+          <div class="ticker-live-tag">
+            <span class="pulse-dot"></span> LIVE NGX
+          </div>
+          <div class="ticker-items-track" id="stockTickerTrack">
+            <!-- Dynamically populated by ticker.js -->
+            <div class="stock-quote-item">
+              <span class="stock-symbol">DANGCEM</span>
+              <span class="stock-val">₦655.00</span>
+              <span class="stock-up">▲ +14.50 (+2.26%)</span>
+            </div>
+            <div class="stock-quote-item">
+              <span class="stock-symbol">DANGSUGAR</span>
+              <span class="stock-val">₦63.80</span>
+              <span class="stock-up">▲ +1.10 (+1.75%)</span>
+            </div>
+            <div class="stock-quote-item">
+              <span class="stock-symbol">NASCON</span>
+              <span class="stock-val">₦49.50</span>
+              <span class="stock-up">▲ +1.40 (+2.91%)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ticker-right">
+          <a href="#investors" class="utility-link">Investor Portal</a>
+          <a href="#media" class="utility-link">Media Center</a>
+          <button class="theme-toggle-btn" id="themeToggleBtn" title="Toggle Dark/Light Mode" aria-label="Toggle Theme">
+            <span id="themeIcon">🌙</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MAIN HEADER & MEGA-NAV ==================== -->
+  <header class="main-header" id="mainHeader">
+    <div class="container">
+      <nav class="navbar">
+        <a href="#" class="brand-logo-link" aria-label="Dangote Group Home">
+          <img src="/assets/logo.svg" alt="Dangote Industries Limited" class="brand-logo-img" />
+        </a>
+
+        <!-- Desktop Navigation Menu -->
+        <ul class="nav-menu">
+          <li class="nav-item">
+            <a href="#about" class="nav-link">About Us ▾</a>
+            <div class="nav-dropdown">
+              <a href="#about" class="dropdown-link">President's Vision <span>→</span></a>
+              <a href="#about" class="dropdown-link">Leadership & Governance <span>→</span></a>
+              <a href="#footprint" class="dropdown-link">Pan-African Footprint <span>→</span></a>
+            </div>
+          </li>
+
+          <li class="nav-item">
+            <a href="#businesses" class="nav-link">Our Businesses ▾</a>
+            <div class="nav-dropdown">
+              <a href="#businesses" class="dropdown-link" onclick="App.renderBusinesses('Energy');">Petroleum Refinery & Petrochemicals <span>→</span></a>
+              <a href="#businesses" class="dropdown-link" onclick="App.renderBusinesses('Heavy');">Dangote Cement Plc <span>→</span></a>
+              <a href="#businesses" class="dropdown-link" onclick="App.renderBusinesses('Agriculture');">Dangote Fertiliser <span>→</span></a>
+              <a href="#businesses" class="dropdown-link" onclick="App.renderBusinesses('Food');">Sugar & Foods (NASCON) <span>→</span></a>
+              <a href="#businesses" class="dropdown-link" onclick="App.renderBusinesses('Infrastructure');">Logistics & Sinotruk <span>→</span></a>
+            </div>
+          </li>
+
+          <li class="nav-item">
+            <a href="#footprint" class="nav-link">Pan-Africa</a>
+          </li>
+
+          <li class="nav-item">
+            <a href="#investors" class="nav-link">Investors ▾</a>
+            <div class="nav-dropdown">
+              <a href="#investors" class="dropdown-link">Shareholder Highlights <span>→</span></a>
+              <a href="#investors" class="dropdown-link">Dividend Calculator <span>→</span></a>
+              <a href="#investors" class="dropdown-link">Financial Statements <span>→</span></a>
+            </div>
+          </li>
+
+          <li class="nav-item">
+            <a href="#sustainability" class="nav-link">Sustainability</a>
+          </li>
+
+          <li class="nav-item">
+            <a href="#media" class="nav-link">Media</a>
+          </li>
+
+          <li class="nav-item">
+            <a href="#careers" class="nav-link">Careers</a>
+          </li>
+
+          <li class="nav-item">
+            <a href="#contact" class="nav-link">Contact</a>
+          </li>
+        </ul>
+
+        <div class="header-actions">
+          <button class="search-trigger-btn" id="searchTriggerBtn" title="Search Dangote (Ctrl+K)" aria-label="Global Search">
+            🔍
+          </button>
+          <a href="#contact" class="btn btn-primary btn-sm header-cta">Inquiries</a>
+          <button class="mobile-menu-btn" id="mobileMenuToggle" aria-label="Open Navigation Drawer">
+            ☰
+          </button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ==================== CINEMATIC HERO SHOWCASE ==================== -->
+  <section class="hero-section" id="heroSection">
+    <div class="hero-slider">
+      <!-- Slide 1: Refinery -->
+      <div class="hero-slide active" data-index="0">
+        <img src="/assets/refinery_hero.jpg" alt="Dangote Petroleum Refinery Lekki" class="hero-bg-img" />
+        <div class="hero-overlay"></div>
+        <div class="container hero-content-wrap">
+          <div class="hero-caption">
+            <div class="hero-tag">Energy Independence</div>
+            <h1 class="hero-title">Powering Africa's <span>Industrial Renaissance</span></h1>
+            <p class="hero-desc">
+              The world's largest single-train petroleum refinery in Lekki Free Trade Zone with 650,000 BPD capacity, transforming Nigeria into an energy net exporter.
+            </p>
+            <div class="hero-cta-group">
+              <button class="btn btn-primary btn-lg" onclick="openBusinessModal('refinery')">Explore Refinery Complex</button>
+              <a href="#businesses" class="btn btn-outline-white btn-lg">Our Businesses</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 2: Cement -->
+      <div class="hero-slide" data-index="1">
+        <img src="/assets/cement_hero.jpg" alt="Dangote Cement Mega Plant" class="hero-bg-img" />
+        <div class="hero-overlay"></div>
+        <div class="container hero-content-wrap">
+          <div class="hero-caption">
+            <div class="hero-tag">Continental Infrastructure</div>
+            <h2 class="hero-title">Building Africa <span>From Within</span></h2>
+            <p class="hero-desc">
+              52.0 Million Metric Tonnes Per Annum across 10 African nations, laying the unbreakable foundation for bridges, highways, and modern metropolises.
+            </p>
+            <div class="hero-cta-group">
+              <button class="btn btn-primary btn-lg" onclick="openBusinessModal('cement')">Discover Cement Network</button>
+              <a href="#footprint" class="btn btn-outline-white btn-lg">Pan-African Footprint</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 3: Fertiliser -->
+      <div class="hero-slide" data-index="2">
+        <img src="/assets/fertiliser_hero.jpg" alt="Dangote Fertiliser Plant" class="hero-bg-img" />
+        <div class="hero-overlay"></div>
+        <div class="container hero-content-wrap">
+          <div class="hero-caption">
+            <div class="hero-tag">Food Security & Agriculture</div>
+            <h2 class="hero-title">Nourishing Soils, <span>Empowering Farmers</span></h2>
+            <p class="hero-desc">
+              Africa's largest granulated urea chemical fertiliser complex (3.0M MTPA), eradicating agricultural import deficits and exporting to global markets.
+            </p>
+            <div class="hero-cta-group">
+              <button class="btn btn-primary btn-lg" onclick="openBusinessModal('fertiliser')">Fertiliser Operations</button>
+              <a href="#investors" class="btn btn-outline-white btn-lg">Investor Facts</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 4: Foundation -->
+      <div class="hero-slide" data-index="3">
+        <img src="/assets/foundation_hero.jpg" alt="Aliko Dangote Foundation CSR" class="hero-bg-img" />
+        <div class="hero-overlay"></div>
+        <div class="container hero-content-wrap">
+          <div class="hero-caption">
+            <div class="hero-tag">Philanthropy & Social Impact</div>
+            <h2 class="hero-title">Touching Lives, <span>Empowering Communities</span></h2>
+            <p class="hero-desc">
+              Over $100 Million USD disbursed in therapeutic child nutrition, maternal healthcare, educational endowments, and disaster relief across Sub-Saharan Africa.
+            </p>
+            <div class="hero-cta-group">
+              <button class="btn btn-primary btn-lg" onclick="openBusinessModal('foundation')">Foundation Initiatives</button>
+              <a href="#sustainability" class="btn btn-outline-white btn-lg">7 Sustainability Pillars</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Live Spec Card -->
+    <div class="hero-spec-card">
+      <div class="spec-title">FLAGSHIP COMPLEX</div>
+      <div class="spec-stat">650,000</div>
+      <div class="spec-desc">Barrels of Crude Refined Per Day at Lekki Mega-Refinery, meeting 100% of Nigerian domestic demand.</div>
+    </div>
+
+    <!-- Slide Navigation Controls -->
+    <div class="hero-controls">
+      <div class="container">
+        <div class="hero-controls-inner">
+          <div class="hero-indicators">
+            <div class="hero-dot active"><div class="hero-dot-progress"></div></div>
+            <div class="hero-dot"><div class="hero-dot-progress"></div></div>
+            <div class="hero-dot"><div class="hero-dot-progress"></div></div>
+            <div class="hero-dot"><div class="hero-dot-progress"></div></div>
+          </div>
+          <div class="hero-nav-arrows">
+            <button class="hero-arrow-btn" id="heroPrevBtn" aria-label="Previous Slide">‹</button>
+            <button class="hero-arrow-btn" id="heroNextBtn" aria-label="Next Slide">›</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== CONGLOMERATE KEY METRICS ==================== -->
+  <section class="metrics-section" id="metrics">
+    <div class="container">
+      <div class="metrics-card-grid">
+        <div class="metric-item">
+          <div class="metric-icon">🛢️</div>
+          <div class="metric-number-wrap">
+            <span class="metric-number" data-target="650000">0</span>
+            <span class="metric-unit">BPD</span>
+          </div>
+          <span class="metric-label">Refining Capacity</span>
+        </div>
+
+        <div class="metric-item">
+          <div class="metric-icon">🏗️</div>
+          <div class="metric-number-wrap">
+            <span class="metric-number" data-target="52">0</span>
+            <span class="metric-unit">M MTPA</span>
+          </div>
+          <span class="metric-label">Cement Production</span>
+        </div>
+
+        <div class="metric-item">
+          <div class="metric-icon">👥</div>
+          <div class="metric-number-wrap">
+            <span class="metric-number" data-target="50000">0</span>
+            <span class="metric-unit">+</span>
+          </div>
+          <span class="metric-label">Jobs Created</span>
+        </div>
+
+        <div class="metric-item">
+          <div class="metric-icon">🌍</div>
+          <div class="metric-number-wrap">
+            <span class="metric-number" data-target="10">0</span>
+            <span class="metric-unit">+</span>
+          </div>
+          <span class="metric-label">African Nations</span>
+        </div>
+
+        <div class="metric-item">
+          <div class="metric-icon">💵</div>
+          <div class="metric-number-wrap">
+            <span class="metric-unit">$</span>
+            <span class="metric-number" data-target="20">0</span>
+            <span class="metric-unit">B+</span>
+          </div>
+          <span class="metric-label">Capital Investments</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== LEADERSHIP & PRESIDENT'S VISION ==================== -->
+  <section class="leadership-section" id="about">
+    <div class="container">
+      <div class="president-grid">
+        <div class="president-photo-wrap">
+          <img src="/assets/aliko_dangote_portrait.jpg" alt="Alhaji Aliko Dangote GCON" class="president-img" />
+          <div class="president-badge-float">
+            <div class="badge-float-title">FOUNDER & PRESIDENT</div>
+            <div class="badge-float-name">Alhaji Aliko Dangote, GCON</div>
+            <div class="badge-float-org">President & Chief Executive Officer, Dangote Industries Limited</div>
+          </div>
+        </div>
+
+        <div class="president-content">
+          <span class="section-eyebrow">Visionary Leadership</span>
+          <h2 class="section-heading">Touching Lives by Providing Basic Needs Across Africa</h2>
+          
+          <div class="quote-box">
+            <p class="quote-text">
+              "To build a prosperous Africa, we must believe in ourselves, manufacture what we consume, and add enduring value to the rich natural resources of our continent."
+            </p>
+          </div>
+
+          <p class="president-bio">
+            From humble beginnings as a small trading firm founded in 1981, Dangote Group has evolved under Alhaji Aliko Dangote's visionary stewardship into Sub-Saharan Africa's largest diversified manufacturing conglomerate. With massive investments in critical infrastructure, cement, petroleum refining, agro-allied manufacturing, and logistics, the Group is championing Africa's economic sovereignty and self-reliance.
+          </p>
+
+          <div class="exec-team-preview">
+            <div class="exec-avatars-group">
+              <div class="exec-avatar-dot" title="Olakunle Alake - GMD">OA</div>
+              <div class="exec-avatar-dot" title="Devakumar Edwin - GED Strategy">DE</div>
+              <div class="exec-avatar-dot" title="Halima Aliko Dangote - Director">HD</div>
+              <div class="exec-avatar-dot" title="Adenike Fajemirokun - Chief Risk Officer">AF</div>
+            </div>
+            <div class="exec-info-text">
+              <strong>Executive Committee & Board</strong>
+              <span>Seasoned global governance guiding over 50,000 industrial personnel.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== BUSINESS ECOSYSTEM EXPLORER ==================== -->
+  <section class="businesses-section" id="businesses">
+    <div class="container">
+      <div class="section-header-wrap">
+        <span class="section-eyebrow">Integrated Conglomerate</span>
+        <h2 class="section-heading">Our Business Verticals</h2>
+        <p class="section-desc-sub">
+          A diversified portfolio spanning energy, heavy manufacturing, agriculture, food essentials, and logistics engineered to drive continental prosperity.
+        </p>
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="category-filter-tabs">
+        <button class="filter-tab-btn active" data-cat="All">All Operations</button>
+        <button class="filter-tab-btn" data-cat="Energy">Energy & Petrochemicals</button>
+        <button class="filter-tab-btn" data-cat="Heavy">Cement & Building</button>
+        <button class="filter-tab-btn" data-cat="Agriculture">Fertiliser</button>
+        <button class="filter-tab-btn" data-cat="Food">Food & Agro-Allied</button>
+        <button class="filter-tab-btn" data-cat="Infrastructure">Logistics & Automotive</button>
+        <button class="filter-tab-btn" data-cat="Philanthropy">Philanthropy</button>
+      </div>
+
+      <!-- Business Cards Grid -->
+      <div class="business-cards-grid" id="businessesGrid">
+        <!-- Dynamically injected by app.js -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== PAN-AFRICAN FOOTPRINT MAP ==================== -->
+  <section class="footprint-section" id="footprint">
+    <div class="container">
+      <div class="section-header-wrap">
+        <span class="section-eyebrow">Continental Reach</span>
+        <h2 class="section-heading">Our Pan-African Footprint</h2>
+        <p class="section-desc-sub">
+          Strategically situated production facilities, deep-water marine terminals, and logistics depots spanning 10+ sovereign African economies.
+        </p>
+      </div>
+
+      <div class="footprint-grid">
+        <!-- Interactive Africa Map -->
+        <div class="map-visual-card">
+          <div class="africa-map-svg-wrap">
+            <!-- Stylized Africa SVG Shape -->
+            <svg class="africa-svg-base" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <path d="M 28 20 C 35 15, 60 14, 75 22 C 85 28, 90 40, 78 55 C 75 62, 65 75, 60 88 C 55 92, 45 85, 42 75 C 38 65, 30 55, 20 48 C 15 40, 20 28, 28 20 Z" />
+            </svg>
+
+            <!-- Country Marker Nodes Container -->
+            <div id="mapMarkersContainer">
+              <!-- Dynamically populated by map.js -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Footprint Detail Panel -->
+        <div class="footprint-detail-panel">
+          <span class="badge badge-red" style="align-self: flex-start;">ACTIVE TERRITORY DOSSIER</span>
+          <div class="country-active-card">
+            <div class="country-header-row">
+              <div class="country-flag-title">
+                <span class="country-flag-emoji" id="activeCountryFlag">🇳🇬</span>
+                <span class="country-title-text" id="activeCountryName">Nigeria</span>
+              </div>
+              <span class="badge badge-green" id="activeCountryStatus">Operational & Expanding</span>
+            </div>
+
+            <div class="country-role-tag" id="activeCountryRole">
+              Conglomerate Headquarters & Manufacturing Hub
+            </div>
+
+            <div class="country-specs-list">
+              <div class="country-spec-row">
+                <i>🏢</i>
+                <div>
+                  <strong>Key Facilities & Complexes:</strong>
+                  <div id="activeCountryFacilities">Petroleum Refinery (650k bpd), Fertiliser (3M MTPA), 3 Mega Cement Plants (Obajana, Ibese, Gboko - 35.25M MTPA), Sugar Refinery (Apapa), NASCON, Sinotruk.</div>
+                </div>
+              </div>
+
+              <div class="country-spec-row">
+                <i>👷</i>
+                <div>
+                  <strong>Direct Regional Workforce:</strong>
+                  <div id="activeCountryEmployees">38,000+ Personnel</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px;">
+              Select Country:
+            </div>
+            <div class="country-selector-pills" id="countryPillsContainer">
+              <!-- Dynamically populated by map.js -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== INVESTOR RELATIONS & DIVIDEND CALCULATOR ==================== -->
+  <section class="investor-section" id="investors">
+    <div class="container">
+      <div class="investor-grid">
+        <div class="investor-info-col">
+          <span class="section-eyebrow">Investor Relations</span>
+          <h2 class="section-heading">Delivering Sustained Shareholder Value</h2>
+          <p class="section-desc-sub">
+            Dangote Group's publicly listed subsidiaries on the Nigerian Exchange (NGX) represent over a quarter of total stock exchange market capitalization.
+          </p>
+
+          <div class="investor-stat-cards">
+            <div class="investor-card">
+              <div class="investor-card-val">₦2.41T</div>
+              <div class="investor-card-label">Cement Audited Group Revenue</div>
+            </div>
+            <div class="investor-card">
+              <div class="investor-card-val">₦30.00</div>
+              <div class="investor-card-label">Dangote Cement Annual Dividend/Share</div>
+            </div>
+            <div class="investor-card">
+              <div class="investor-card-val">11.16T</div>
+              <div class="investor-card-label">NGN Combined Market Cap (NGX)</div>
+            </div>
+            <div class="investor-card">
+              <div class="investor-card-val">AA+ (EXP)</div>
+              <div class="investor-card-label">Fitch / GCR Investment Grade Credit Rating</div>
+            </div>
+          </div>
+
+          <h4 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 14px;">Shareholder Downloads & Disclosures</h4>
+          <div class="investor-docs-list">
+            <a href="#investors" class="doc-download-item" onclick="showToast('Download Initiated', '2025/2026 Dangote Cement Integrated Annual Report (PDF) is downloading...', 'success')">
+              <div class="doc-title-meta">
+                <span class="doc-icon">📄</span>
+                <div>
+                  <div class="doc-name">Dangote Cement 2025/2026 Integrated Annual Report</div>
+                  <div class="doc-size">PDF • 14.8 MB • Full Audited Accounts & ESG Disclosures</div>
+                </div>
+              </div>
+              <span class="btn btn-outline btn-sm">Download</span>
+            </a>
+
+            <a href="#investors" class="doc-download-item" onclick="showToast('Download Initiated', 'Dangote Sugar Refinery Half-Year Factsheet is downloading...', 'success')">
+              <div class="doc-title-meta">
+                <span class="doc-icon">📊</span>
+                <div>
+                  <div class="doc-name">Dangote Sugar Refinery BIP Progress & Q2 Earnings</div>
+                  <div class="doc-size">PDF • 6.2 MB • Operational Backward Integration Update</div>
+                </div>
+              </div>
+              <span class="btn btn-outline btn-sm">Download</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Interactive Dividend / ROI Calculator -->
+        <div class="calculator-box">
+          <div class="calc-header">
+            <div>
+              <span class="badge badge-gold" style="margin-bottom: 6px;">INTERACTIVE TOOL</span>
+              <h3 class="calc-title">Shareholder Dividend & ROI Calculator</h3>
+            </div>
+            <span style="font-size: 1.5rem;">🧮</span>
+          </div>
+
+          <div class="calc-form-group">
+            <label class="calc-label" for="calcSubsidiary">Select Listed Entity</label>
+            <select class="calc-select" id="calcSubsidiary">
+              <option value="DANGCEM">Dangote Cement Plc (DANGCEM - NGN 655.00)</option>
+              <option value="DANGSUGAR">Dangote Sugar Refinery Plc (DANGSUGAR - NGN 63.80)</option>
+              <option value="NASCON">NASCON Allied Industries Plc (NASCON - NGN 49.50)</option>
+            </select>
+          </div>
+
+          <div class="calc-form-group">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label class="calc-label" for="calcSharesInput">Number of Shares Owned</label>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">Adjust via input or slider</span>
+            </div>
+            <input type="number" class="calc-input" id="calcSharesInput" value="5000" min="100" max="1000000" step="100" />
+            <div class="slider-container">
+              <span style="font-size: 0.8rem; color: var(--text-muted);">100</span>
+              <input type="range" class="calc-range-slider" id="calcSharesSlider" min="100" max="50000" value="5000" step="100" />
+              <span style="font-size: 0.8rem; color: var(--text-muted);">50k</span>
+            </div>
+          </div>
+
+          <div class="calc-form-group">
+            <label class="calc-label" for="calcPurchasePrice">Your Average Purchase Price (₦ per share)</label>
+            <input type="number" class="calc-input" id="calcPurchasePrice" value="550.00" step="1.0" />
+          </div>
+
+          <!-- Calculated Results Panel -->
+          <div class="calc-results-panel">
+            <div class="calc-result-row">
+              <span>Current Portfolio Market Value:</span>
+              <strong id="calcCurrentMarketVal" style="color: var(--dangote-navy);">₦3,275,000.00</strong>
+            </div>
+            <div class="calc-result-row">
+              <span>Unrealized Capital Gain:</span>
+              <strong id="calcCapitalGain" style="color: var(--dangote-green);">+₦525,000.00 (+19.09%)</strong>
+            </div>
+            <div class="calc-result-row">
+              <span>Effective Dividend Yield:</span>
+              <strong id="calcEffectiveYield">4.58% p.a.</strong>
+            </div>
+            <div class="calc-result-row highlight-row">
+              <span>Estimated Annual Dividend Income:</span>
+              <span class="calc-highlight-val" id="calcAnnualDividend">₦150,000.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== SUSTAINABILITY 7 PILLARS FRAMEWORK ==================== -->
+  <section class="sustainability-section" id="sustainability">
+    <div class="container">
+      <div class="section-header-wrap">
+        <span class="section-eyebrow">Corporate Stewardship</span>
+        <h2 class="section-heading">The Dangote 7 Sustainability Pillars</h2>
+        <p class="section-desc-sub">
+          A rigorous ESG framework embedding social responsibility, environmental conservation, and robust governance into every manufacturing workflow.
+        </p>
+      </div>
+
+      <div class="pillars-grid">
+        <div class="pillar-card">
+          <div class="pillar-num">01</div>
+          <h4 class="pillar-title">Financial Pillar</h4>
+          <p class="pillar-desc">Delivering sustainable, profitable growth while deploying prudent risk governance to safeguard long-term shareholder capital.</p>
+        </div>
+
+        <div class="pillar-card">
+          <div class="pillar-num">02</div>
+          <h4 class="pillar-title">Institutional Pillar</h4>
+          <p class="pillar-desc">Upholding highest global corporate governance standards, anti-corruption transparency, and operational compliance.</p>
+        </div>
+
+        <div class="pillar-card">
+          <div class="pillar-num">03</div>
+          <h4 class="pillar-title">Economic Pillar</h4>
+          <p class="pillar-desc">Fostering African self-reliance by substituting imports with high-grade local manufacturing and empowering local supply ecosystems.</p>
+        </div>
+
+        <div class="pillar-card">
+          <div class="pillar-num">04</div>
+          <h4 class="pillar-title">Operational Pillar</h4>
+          <p class="pillar-desc">Deploying world-class automation, ISO-certified quality assurance, and zero-defect product engineering.</p>
+        </div>
+
+        <div class="pillar-card">
+          <div class="pillar-num">05</div>
+          <h4 class="pillar-title">Environmental Pillar</h4>
+          <p class="pillar-desc">Decarbonisation initiatives, waste heat recovery systems, alternative fuel clinker kilns, and strict emission monitoring.</p>
+        </div>
+
+        <div class="pillar-card">
+          <div class="pillar-num">06</div>
+          <h4 class="pillar-title">Social Pillar</h4>
+          <p class="pillar-desc">Empowering host communities through modern healthcare clinics, schools, scholarship funds, and youth vocational training.</p>
+        </div>
+
+        <div class="pillar-card">
+          <div class="pillar-num">07</div>
+          <h4 class="pillar-title">Cultural Pillar</h4>
+          <p class="pillar-desc">Nurturing a high-performance, inclusive culture that celebrates African diversity, innovation, and professional integrity.</p>
+        </div>
+
+        <!-- Foundation Feature Highlight -->
+        <div class="pillar-card" style="background: linear-gradient(135deg, var(--dangote-navy) 0%, var(--dangote-navy-deep) 100%); color: #FFFFFF;">
+          <div class="pillar-num" style="color: var(--dangote-gold);">ADF</div>
+          <h4 class="pillar-title" style="color: #FFFFFF;">Aliko Dangote Foundation</h4>
+          <p class="pillar-desc" style="color: #CBD5E1;">Over $100M+ in philanthropic grants touching over 5 million vulnerable lives across health and education.</p>
+          <button class="btn btn-primary btn-sm" style="margin-top: auto;" onclick="openBusinessModal('foundation')">Explore Foundation</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== NEWS & MEDIA CENTER ==================== -->
+  <section class="news-section" id="media">
+    <div class="container">
+      <div class="section-header-wrap">
+        <span class="section-eyebrow">Corporate Newsroom</span>
+        <h2 class="section-heading">Latest Media & Press Releases</h2>
+        <p class="section-desc-sub">
+          Official announcements, market disclosures, milestone achievements, and corporate storytelling from across the Dangote conglomerate.
+        </p>
+      </div>
+
+      <div class="news-filter-bar">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span class="badge badge-red">DISPATCHES</span>
+        </div>
+        <div class="news-search-box">
+          <span>🔍</span>
+          <input type="text" id="newsSearchInput" placeholder="Search announcements..." oninput="App.allNews && App.renderNewsFromSearch(this.value)" />
+        </div>
+      </div>
+
+      <!-- News Cards Grid -->
+      <div class="news-cards-grid" id="newsGrid">
+        <!-- Dynamically injected by app.js -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== CAREERS & TALENT PORTAL ==================== -->
+  <section class="careers-section" id="careers">
+    <div class="container">
+      <div class="section-header-wrap">
+        <span class="section-eyebrow">Work With Us</span>
+        <h2 class="section-heading">Join Africa's Premier Industrial Conglomerate</h2>
+        <p class="section-desc-sub">
+          Build a world-class career alongside the brightest engineering minds, innovators, and commercial executives transforming Africa's industrial horizon.
+        </p>
+      </div>
+
+      <div class="jobs-grid" id="jobsGrid">
+        <!-- Dynamically injected by app.js -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== CONTACT, BRANCH DIRECTORY & ETHICS ==================== -->
+  <section class="contact-section" id="contact">
+    <div class="container">
+      <div class="section-header-wrap">
+        <span class="section-eyebrow">Corporate Connect</span>
+        <h2 class="section-heading">Contact & Global Office Directory</h2>
+        <p class="section-desc-sub">
+          Connect with our Corporate Affairs Directorate, procurement teams, or regional liaisons.
+        </p>
+      </div>
+
+      <div class="contact-grid">
+        <!-- Contact Form -->
+        <div class="contact-form-box">
+          <h3 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 20px;">Corporate Inquiry Dispatch</h3>
+          <form id="corporateContactForm">
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label" for="contactFullName">Full Name *</label>
+                <input type="text" class="form-input" id="contactFullName" required placeholder="e.g. Dr. Babatunde Alabi" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="contactEmail">Official Email *</label>
+                <input type="email" class="form-input" id="contactEmail" required placeholder="name@company.com" />
+              </div>
+            </div>
+
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label" for="contactPhone">Phone Number</label>
+                <input type="tel" class="form-input" id="contactPhone" placeholder="+234 800 000 0000" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="contactInquiryType">Inquiry Classification *</label>
+                <select class="form-select" id="contactInquiryType" required>
+                  <option value="General Corporate Inquiry">General Corporate Inquiry</option>
+                  <option value="Procurement / Vendor Registration">Procurement / Vendor Registration</option>
+                  <option value="Investor Relations">Investor Relations</option>
+                  <option value="Commercial Fuel / Cement Bulk Purchase">Commercial Fuel / Cement Bulk Purchase</option>
+                  <option value="Media & Press Inquiry">Media & Press Inquiry</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="contactSubsidiary">Target Subsidiary</label>
+              <select class="form-select" id="contactSubsidiary">
+                <option value="Dangote Industries Limited">Dangote Industries Limited (Headquarters)</option>
+                <option value="Dangote Petroleum Refinery">Dangote Petroleum Refinery & Petrochemicals</option>
+                <option value="Dangote Cement Plc">Dangote Cement Plc</option>
+                <option value="Dangote Fertiliser Limited">Dangote Fertiliser Limited</option>
+                <option value="Dangote Sugar Refinery Plc">Dangote Sugar Refinery Plc</option>
+                <option value="NASCON Allied Industries Plc">NASCON Allied Industries Plc</option>
+                <option value="Aliko Dangote Foundation">Aliko Dangote Foundation</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="contactSubject">Subject *</label>
+              <input type="text" class="form-input" id="contactSubject" required placeholder="Concise subject line" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="contactMessage">Inquiry Details *</label>
+              <textarea class="form-textarea" id="contactMessage" required placeholder="Detail your procurement proposal, commercial request, or query..."></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+              Send Corporate Inquiry
+            </button>
+          </form>
+        </div>
+
+        <!-- Branches Directory & Ethics Hotline -->
+        <div class="branches-box">
+          <div class="branch-tabs-row">
+            <button class="branch-tab-btn active" data-branch="lagos">Lagos HQ (Ikoyi)</button>
+            <button class="branch-tab-btn" data-branch="abuja">Abuja Corporate</button>
+            <button class="branch-tab-btn" data-branch="lekki">Lekki Refinery</button>
+            <button class="branch-tab-btn" data-branch="london">London Office</button>
+            <button class="branch-tab-btn" data-branch="southafrica">South Africa</button>
+          </div>
+
+          <div class="branch-detail-card">
+            <h4 class="branch-name" id="branchName">Global Headquarters (Leadway Marble House)</h4>
+            <div class="branch-info-list">
+              <div class="branch-info-item">
+                <i>📍</i>
+                <div>
+                  <strong>Address:</strong>
+                  <div id="branchAddress">1 Alfred Rewane Road (formerly Kingsway Road), Falomo, Ikoyi, Lagos, Nigeria</div>
+                </div>
+              </div>
+              <div class="branch-info-item">
+                <i>📞</i>
+                <div>
+                  <strong>Telephone:</strong>
+                  <div id="branchPhone">+234 1 448 0815 / +234 1 448 0816</div>
+                </div>
+              </div>
+              <div class="branch-info-item">
+                <i>✉️</i>
+                <div>
+                  <strong>Email:</strong>
+                  <div id="branchEmail">corporate.affairs@dangote.com</div>
+                </div>
+              </div>
+              <div class="branch-info-item">
+                <i>🕒</i>
+                <div>
+                  <strong>Business Hours:</strong>
+                  <div id="branchHours">Monday - Friday: 8:00 AM - 5:30 PM (WAT)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ethics Hotline Banner -->
+          <div class="ethics-hotline-card">
+            <div class="ethics-info">
+              <h4>🛡️ Whistleblower & Anti-Corruption Portal</h4>
+              <p>100% confidential, encrypted reporting channel directly routed to the Chief Risk & Compliance Officer.</p>
+            </div>
+            <button class="btn btn-primary btn-sm" id="openEthicsModalBtn" style="white-space: nowrap;">Report Confidentially</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="main-footer">
+    <div class="container">
+      <div class="footer-top-grid">
+        <div class="footer-brand-col">
+          <img src="/assets/logo.svg" alt="Dangote Industries Limited" style="height: 48px; filter: brightness(0) invert(1);" />
+          <p>
+            Touching the lives of people by providing their basic needs. Africa's undisputed industrial powerhouse driving manufacturing autonomy, employment, and sustainable development.
+          </p>
+          <div class="footer-social-links">
+            <a href="https://linkedin.com" target="_blank" class="social-icon-btn" aria-label="LinkedIn">in</a>
+            <a href="https://twitter.com" target="_blank" class="social-icon-btn" aria-label="X (Twitter)">𝕏</a>
+            <a href="https://youtube.com" target="_blank" class="social-icon-btn" aria-label="YouTube">▶</a>
+            <a href="https://facebook.com" target="_blank" class="social-icon-btn" aria-label="Facebook">f</a>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h5>Businesses</h5>
+          <ul class="footer-links">
+            <li><a href="#businesses" class="footer-link">Petroleum Refinery</a></li>
+            <li><a href="#businesses" class="footer-link">Dangote Cement</a></li>
+            <li><a href="#businesses" class="footer-link">Dangote Fertiliser</a></li>
+            <li><a href="#businesses" class="footer-link">Sugar Refinery</a></li>
+            <li><a href="#businesses" class="footer-link">NASCON Allied</a></li>
+            <li><a href="#businesses" class="footer-link">Logistics & Sinotruk</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Company</h5>
+          <ul class="footer-links">
+            <li><a href="#about" class="footer-link">About Dangote</a></li>
+            <li><a href="#about" class="footer-link">Board of Directors</a></li>
+            <li><a href="#footprint" class="footer-link">Pan-African Operations</a></li>
+            <li><a href="#sustainability" class="footer-link">7 Sustainability Pillars</a></li>
+            <li><a href="#media" class="footer-link">Press Releases</a></li>
+            <li><a href="#careers" class="footer-link">Careers Portal</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Investors</h5>
+          <ul class="footer-links">
+            <li><a href="#investors" class="footer-link">Stock Quotes</a></li>
+            <li><a href="#investors" class="footer-link">Dividend Calculator</a></li>
+            <li><a href="#investors" class="footer-link">Financial Statements</a></li>
+            <li><a href="#investors" class="footer-link">ESG Reports</a></li>
+            <li><a href="#contact" class="footer-link">Shareholder Services</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col newsletter-box">
+          <h5>Conglomerate Updates</h5>
+          <p>Subscribe to receive official corporate disclosures, dividend announcements, and executive news.</p>
+          <form class="newsletter-form" onsubmit="event.preventDefault(); showToast('Subscribed!', 'You are now subscribed to Dangote Group Investor Disclosures.', 'success'); this.reset();">
+            <input type="email" class="newsletter-input" required placeholder="Enter your email address" />
+            <button type="submit" class="btn btn-primary btn-sm">Join</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="footer-bottom-bar">
+        <div>
+          © 2026 Dangote Industries Limited. All Rights Reserved. "Providing Your Basic Needs".
+        </div>
+        <div class="footer-legal-links">
+          <a href="#" class="footer-link">Privacy Policy</a>
+          <a href="#" class="footer-link">Terms of Service</a>
+          <a href="#" class="footer-link">Ethics & Whistleblowing</a>
+          <a href="#" class="footer-link">Cookie Notice</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================== SEARCH MODAL ==================== -->
+  <div class="modal-backdrop" id="searchModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Global Enterprise Search</h3>
+        <button class="modal-close-btn" id="closeSearchModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="search-input-wrap">
+          <span class="search-input-icon">🔍</span>
+          <input type="text" id="globalSearchInput" placeholder="Search subsidiaries, news, jobs, facilities (e.g. Refinery, Cement)..." />
+        </div>
+        <div class="search-results-list" id="searchResultsContainer">
+          <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 20px;">
+            Type keywords like "Refinery", "Cement", "Dividend", or "Jobs"...
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== DETAIL MODAL (BUSINESS / NEWS / STOCK) ==================== -->
+  <div class="modal-backdrop" id="detailModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="detailModalTitle">Detail Profile</h3>
+        <button class="modal-close-btn" onclick="closeDetailModal()">✕</button>
+      </div>
+      <div class="modal-body" id="detailModalBody">
+        <!-- Dynamically populated -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== JOB APPLICATION MODAL ==================== -->
+  <div class="modal-backdrop" id="applyJobModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="applyJobTitle">Job Application</h3>
+        <button class="modal-close-btn" onclick="closeApplyModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="jobApplicationForm">
+          <input type="hidden" id="applyJobIdInput" />
+          
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label" for="applicantName">Full Name *</label>
+              <input type="text" class="form-input" id="applicantName" required placeholder="e.g. Adebayo Ogunlesi" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="applicantEmail">Email Address *</label>
+              <input type="email" class="form-input" id="applicantEmail" required placeholder="adebayo@example.com" />
+            </div>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label" for="applicantPhone">Phone Number *</label>
+              <input type="tel" class="form-input" id="applicantPhone" required placeholder="+234 802 000 0000" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="applicantExp">Years of Relevant Experience *</label>
+              <input type="number" class="form-input" id="applicantExp" required min="0" max="40" value="4" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="applicantQualification">Highest Educational Qualification *</label>
+            <select class="form-select" id="applicantQualification" required>
+              <option value="B.Sc / B.Eng Degree">B.Sc / B.Eng Degree</option>
+              <option value="M.Sc / MBA Master's Degree">M.Sc / MBA Master's Degree</option>
+              <option value="Ph.D / Doctorate">Ph.D / Doctorate</option>
+              <option value="HND Higher National Diploma">HND Higher National Diploma</option>
+              <option value="Professional Charter (COREN, ICAN, ACCA)">Professional Charter (COREN, ICAN, ACCA)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="applicantLinkedin">LinkedIn Profile / Portfolio Link</label>
+            <input type="url" class="form-input" id="applicantLinkedin" placeholder="https://linkedin.com/in/yourprofile" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="applicantCover">Executive Summary & Relevant Competencies</label>
+            <textarea class="form-textarea" id="applicantCover" placeholder="Summarize your key engineering, operational, or leadership accomplishments..."></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+            Submit Formal Application
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== ETHICS HOTLINE MODAL ==================== -->
+  <div class="modal-backdrop" id="ethicsModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Confidential Whistleblower Submission</h3>
+        <button class="modal-close-btn" id="closeEthicsModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 20px;">
+          Dangote Industries Limited maintains a zero-tolerance policy against corruption, fraud, health safety violations, and ethical misconduct. Your submission is protected by corporate non-retaliation policies.
+        </p>
+        <form id="ethicsForm">
+          <div class="form-group">
+            <label class="form-label" for="ethicsType">Incident Type *</label>
+            <select class="form-select" id="ethicsType" required>
+              <option value="Bribery & Financial Corruption">Bribery & Financial Corruption</option>
+              <option value="Procurement Malpractice">Procurement Malpractice</option>
+              <option value="Health, Safety & Environmental Violation">Health, Safety & Environmental Violation</option>
+              <option value="Harassment or Discrimination">Harassment or Discrimination</option>
+              <option value="Theft or Asset Diversion">Theft or Asset Diversion</option>
+            </select>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label" for="ethicsSubsidiary">Subsidiary / Facility *</label>
+              <input type="text" class="form-input" id="ethicsSubsidiary" required placeholder="e.g. Obajana Plant or Lekki Refinery" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="ethicsLocation">Location / Unit</label>
+              <input type="text" class="form-input" id="ethicsLocation" placeholder="e.g. Packing Line 2 or Warehouse" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="ethicsDetails">Detailed Description of Incident *</label>
+            <textarea class="form-textarea" id="ethicsDetails" required placeholder="Provide specific dates, persons involved, and factual details..."></textarea>
+          </div>
+
+          <div class="form-group" style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+            <input type="checkbox" id="ethicsAnonymous" checked style="width: 18px; height: 18px;" />
+            <label for="ethicsAnonymous" style="font-size: 0.9rem; font-weight: 600; cursor: pointer;">
+              Submit 100% Anonymously (Do not log personal identifiers)
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="ethicsContact">Contact for Follow-up (Optional)</label>
+            <input type="text" class="form-input" id="ethicsContact" placeholder="Encrypted email or mobile phone (optional)" />
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+            Transmit Encrypted Report
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MOBILE NAVIGATION DRAWER ==================== -->
+  <div class="mobile-nav-drawer" id="mobileNavDrawer">
+    <div class="drawer-panel">
+      <div class="drawer-header">
+        <img src="/assets/logo.svg" alt="Dangote Group" style="height: 38px;" />
+        <button class="modal-close-btn" id="closeMobileDrawer">✕</button>
+      </div>
+      <div class="drawer-links-list">
+        <a href="#about" class="drawer-link">About Dangote <span>→</span></a>
+        <a href="#businesses" class="drawer-link">Our Businesses <span>→</span></a>
+        <a href="#footprint" class="drawer-link">Pan-African Footprint <span>→</span></a>
+        <a href="#investors" class="drawer-link">Investor Relations <span>→</span></a>
+        <a href="#sustainability" class="drawer-link">Sustainability & HSSE <span>→</span></a>
+        <a href="#media" class="drawer-link">Media & Newsroom <span>→</span></a>
+        <a href="#careers" class="drawer-link">Careers & Academy <span>→</span></a>
+        <a href="#contact" class="drawer-link">Contact & Inquiries <span>→</span></a>
+      </div>
+      <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--surface-border);">
+        <a href="#contact" class="btn btn-primary" style="width: 100%;">Contact Headquarters</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TOAST NOTIFICATION CONTAINER ==================== -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="/js/api.js"></script>
+  <script src="/js/ticker.js"></script>
+  <script src="/js/map.js"></script>
+  <script src="/js/calculator.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

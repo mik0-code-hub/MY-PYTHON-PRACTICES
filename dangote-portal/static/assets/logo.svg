@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 70" width="340" height="70" fill="none">
+  <!-- Eagle and Red Arc Emblem -->
+  <g transform="translate(10, 5)">
+    <!-- Red Arc / Sunrise Horizon -->
+    <path d="M 5 45 C 22 28, 48 28, 65 45 C 55 41, 20 41, 5 45 Z" fill="#D3232A" />
+    <ellipse cx="35" cy="41" rx="26" ry="6" fill="#D3232A" />
+
+    <!-- Eagle Emblem -->
+    <!-- Left Wing -->
+    <path d="M 35 32 C 28 26, 18 20, 8 18 C 14 24, 22 30, 26 36 C 21 34, 15 33, 11 34 C 18 38, 25 41, 30 43 C 24 43, 18 45, 14 48 C 22 48, 29 46, 35 43 Z" fill="#0B2545" />
+    
+    <!-- Right Wing -->
+    <path d="M 35 32 C 42 26, 52 20, 62 18 C 56 24, 48 30, 44 36 C 49 34, 55 33, 59 34 C 52 38, 45 41, 40 43 C 46 43, 52 45, 56 48 C 48 48, 41 46, 35 43 Z" fill="#0B2545" />
+    
+    <!-- Eagle Body & Head -->
+    <path d="M 35 15 C 33 15, 31 17, 31 20 C 31 22, 33 24, 33 28 L 35 37 L 37 28 C 37 24, 39 22, 39 20 C 39 17, 37 15, 35 15 Z" fill="#0B2545" />
+    <!-- Beak -->
+    <polygon points="35,16 31,19 35,21" fill="#D4AF37" />
+    <!-- Tail Feathers -->
+    <path d="M 33 42 L 35 49 L 37 42 Z" fill="#0B2545" />
+  </g>
+
+  <!-- Typography -->
+  <g transform="translate(85, 42)">
+    <text x="0" y="0" font-family="'Inter', 'Montserrat', 'Segoe UI', sans-serif" font-size="28" font-weight="900" letter-spacing="3" fill="#0B2545">DANGOTE</text>
+    <text x="2" y="16" font-family="'Inter', 'Montserrat', 'Segoe UI', sans-serif" font-size="8.5" font-weight="700" letter-spacing="4.5" fill="#D3232A">INDUSTRIES LIMITED</text>
+  </g>
+</svg>
