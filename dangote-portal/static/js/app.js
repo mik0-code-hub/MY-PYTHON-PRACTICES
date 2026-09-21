@@ -547,7 +547,7 @@ function openBusinessModal(bizId) {
       <p style="color: var(--text-secondary); line-height: 1.7; margin-bottom: 20px;">${biz.description}</p>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+    <div class="modal-specs-grid">
       <div style="background: var(--bg-secondary); padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--surface-border);">
         <strong style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); display: block;">Installed Capacity</strong>
         <span style="font-size: 1.1rem; font-weight: 700; color: var(--dangote-navy);">${biz.capacity}</span>

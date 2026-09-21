@@ -221,6 +221,13 @@
   grid-template-columns: 1.3fr 1fr;
   gap: 50px;
   align-items: center;
+  width: 100%;
+  max-width: 100%;
+}
+
+.footprint-grid > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .map-visual-card {
@@ -427,6 +434,13 @@
   grid-template-columns: 1fr 1.1fr;
   gap: 50px;
   align-items: flex-start;
+  width: 100%;
+  max-width: 100%;
+}
+
+.investor-grid > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .investor-stat-cards {
@@ -702,7 +716,8 @@
   border: 1px solid var(--surface-border);
   border-radius: var(--radius-full);
   padding: 6px 16px;
-  width: 320px;
+  width: 100%;
+  max-width: 320px;
 }
 
 .news-search-box input {
@@ -879,6 +894,13 @@
   display: grid;
   grid-template-columns: 1.1fr 1fr;
   gap: 50px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.contact-grid > * {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .contact-form-box {
@@ -887,6 +909,8 @@
   border-radius: var(--radius-lg);
   padding: 38px;
   box-shadow: var(--shadow-xl);
+  min-width: 0;
+  max-width: 100%;
 }
 
 .form-row-2 {
@@ -935,6 +959,8 @@
 .branches-box {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .branch-tabs-row {
@@ -942,7 +968,10 @@
   gap: 8px;
   margin-bottom: 20px;
   overflow-x: auto;
+  max-width: 100%;
+  width: 100%;
   padding-bottom: 6px;
+  -webkit-overflow-scrolling: touch;
 }
 
 .branch-tab-btn {
@@ -1096,6 +1125,20 @@
   padding: 28px;
 }
 
+.modal-specs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 480px) {
+  .modal-specs-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
 /* Search Modal Specifics */
 .search-input-wrap {
   position: relative;
@@ -1193,7 +1236,7 @@
   box-shadow: var(--shadow-xl);
   border-radius: var(--radius-md);
   padding: 16px 20px;
-  min-width: 320px;
+  min-width: 260px;
   max-width: 420px;
   display: flex;
   align-items: flex-start;
@@ -1238,6 +1281,7 @@
   backdrop-filter: blur(8px);
   opacity: 0;
   visibility: hidden;
+  overflow: hidden;
   transition: all var(--transition-smooth);
 }
 
@@ -1333,21 +1377,165 @@
 @media (max-width: 640px) {
   .business-cards-grid {
     grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .business-card-body {
+    padding: 20px 16px;
   }
   .news-cards-grid {
     grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .news-card {
+    padding: 20px 16px;
+  }
+  .news-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .news-search-box {
+    max-width: 100%;
+    width: 100%;
   }
   .pillars-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
-  .form-row-2 {
-    grid-template-columns: 1fr;
+  .pillar-card {
+    padding: 20px 16px;
+  }
+  .jobs-grid {
+    gap: 18px;
+  }
+  .job-card {
+    padding: 20px 16px;
+  }
+  .map-visual-card {
+    padding: 16px 10px;
+    min-height: 330px;
+  }
+  .africa-map-svg-wrap {
+    max-width: 100%;
+    height: 310px;
+  }
+  .country-active-card {
+    padding: 20px 16px;
   }
   .investor-stat-cards {
     grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .investor-card {
+    padding: 18px 16px;
+  }
+  .doc-download-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+  .doc-download-item .btn {
+    width: 100%;
+    text-align: center;
+  }
+  .calculator-box {
+    padding: 20px 16px;
+  }
+  .calc-result-row {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .calc-results-panel {
+    padding: 16px 12px;
+  }
+  .contact-form-box {
+    padding: 22px 16px;
+  }
+  .form-row-2 {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .branch-detail-card {
+    padding: 20px 16px;
   }
   .ethics-hotline-card {
     flex-direction: column;
     align-items: flex-start;
+    padding: 20px 16px;
+    gap: 16px;
+  }
+  .ethics-hotline-card .btn {
+    width: 100%;
+  }
+  .category-filter-tabs {
+    gap: 8px;
+  }
+  .filter-tab-btn {
+    padding: 8px 14px;
+    font-size: 0.82rem;
+  }
+  .modal-backdrop {
+    padding: 10px;
+  }
+  .modal-header {
+    padding: 16px 18px;
+  }
+  .modal-body {
+    padding: 18px 16px;
+  }
+  .toast-container {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    align-items: stretch;
+  }
+  .toast {
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .country-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .country-title-text {
+    font-size: 1.4rem;
+  }
+  .calc-title {
+    font-size: 1.15rem;
+  }
+  .calc-highlight-val {
+    font-size: 1.2rem;
+  }
+  .job-title {
+    font-size: 1.15rem;
+  }
+  .job-pills-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .branch-name {
+    font-size: 1.1rem;
+    word-break: break-word;
+  }
+  .branch-info-item div {
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+  .branch-tabs-row {
+    padding-bottom: 4px;
+  }
+  .branch-tab-btn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+  .drawer-panel {
+    width: 88%;
+    max-width: 320px;
   }
 }
