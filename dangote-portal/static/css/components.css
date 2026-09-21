@@ -268,6 +268,15 @@
   transform: translate(-50%, -50%);
   cursor: pointer;
   z-index: 10;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 40px touch hit area for touchscreen precision */
+.map-marker::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
 }
 
 .marker-ring {

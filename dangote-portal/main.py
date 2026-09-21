@@ -8,9 +8,11 @@ import json
 import re
 import html
 import xml.etree.ElementTree as ET
+import smtplib
+from email.mime.text import MIMEText
 from email.utils import parsedate_to_datetime
 from typing import Optional, List
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -883,8 +885,59 @@ async def get_careers(department: Optional[str] = None):
         return [c for c in jobs if department.lower() in c["department"].lower()]
     return jobs
 
+def dispatch_form_notification(event_type: str, details: dict):
+    """
+    Dispatches notifications for new form submissions (Inquiries & Applications).
+    Sends an email via SMTP if SMTP_HOST and SMTP_USER are configured in environment.
+    Always logs the complete structured details to server logs for permanent audit trail.
+    """
+    recipient = os.getenv("NOTIFICATION_EMAIL", "michealofodile87@yahoo.com")
+    subject = f"[Dangote Portal] New {event_type} Received"
+    
+    body_lines = [
+        "==================================================",
+        f" DANGOTE PORTAL NOTIFICATION: {event_type.upper()}",
+        "==================================================",
+        ""
+    ]
+    for k, v in details.items():
+        body_lines.append(f"  {k}: {v}")
+    
+    body_lines.extend([
+        "",
+        "--------------------------------------------------",
+        f"Timestamp: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S WAT')}",
+        "Review all active submissions at: /api/admin/leads?key=miko_admin_2026",
+        "=================================================="
+    ])
+    body_text = "\n".join(body_lines)
+    
+    # 1. Guaranteed server logging (captured by Render logs)
+    print(f"\n{body_text}\n")
+
+    # 2. Direct SMTP dispatch if credentials provided
+    smtp_host = os.getenv("SMTP_HOST")
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_pass = os.getenv("SMTP_PASS")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+
+    if smtp_host and smtp_user and smtp_pass:
+        try:
+            msg = MIMEText(body_text)
+            msg["Subject"] = subject
+            msg["From"] = smtp_user
+            msg["To"] = recipient
+            
+            with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
+                server.starttls()
+                server.login(smtp_user, smtp_pass)
+                server.send_message(msg)
+            print(f"[EMAIL DISPATCH SUCCESS] Form notification sent to {recipient}")
+        except Exception as err:
+            print(f"[EMAIL DISPATCH NOTICE] Could not send email via {smtp_host}: {err}")
+
 @app.post("/api/careers/apply")
-async def apply_career(application: CareerApplication):
+async def apply_career(application: CareerApplication, background_tasks: BackgroundTasks):
     """Receives candidate job applications and permanently saves to SQLite database."""
     app_id = f"DAN-APP-{random.randint(10000, 99999)}"
     try:
@@ -900,6 +953,20 @@ async def apply_career(application: CareerApplication):
         ))
         conn.commit()
         conn.close()
+        
+        # Trigger asynchronous email notification in background
+        background_tasks.add_task(dispatch_form_notification, "Career Application", {
+            "Application ID": app_id,
+            "Candidate Name": application.fullName,
+            "Email": application.email,
+            "Phone": application.phone,
+            "Position": application.jobTitle,
+            "Job Ref": application.jobId,
+            "Experience": f"{application.experienceYears} years",
+            "Qualification": application.qualification,
+            "LinkedIn": application.linkedinUrl or "N/A",
+            "Cover Note": application.coverNote or "N/A"
+        })
     except Exception as e:
         print("Database insert error:", e)
 
@@ -910,7 +977,7 @@ async def apply_career(application: CareerApplication):
     }
 
 @app.post("/api/contact")
-async def submit_contact(inquiry: ContactForm):
+async def submit_contact(inquiry: ContactForm, background_tasks: BackgroundTasks):
     """Handles general inquiries and saves permanently to SQLite database."""
     ref_id = f"DIL-INQ-{random.randint(100000, 999999)}"
     try:
@@ -925,6 +992,18 @@ async def submit_contact(inquiry: ContactForm):
         ))
         conn.commit()
         conn.close()
+        
+        # Trigger asynchronous email notification in background
+        background_tasks.add_task(dispatch_form_notification, "Corporate Inquiry", {
+            "Reference ID": ref_id,
+            "Full Name": inquiry.fullName,
+            "Email": inquiry.email,
+            "Phone": inquiry.phone or "N/A",
+            "Inquiry Type": inquiry.inquiryType,
+            "Subsidiary": inquiry.subsidiary or "General",
+            "Subject": inquiry.subject,
+            "Message": inquiry.message
+        })
     except Exception as e:
         print("Database insert error:", e)
 
@@ -1004,6 +1083,51 @@ async def calculate_dividend(req: CalculatorRequest):
         "annualDividendIncome": round(estimated_annual_dividend, 2),
         "effectiveYield": effective_dividend_yield
     }
+
+@app.get("/api/admin/leads")
+async def get_admin_leads(key: Optional[str] = None):
+    """Secure endpoint for Miko Logic / developer to review all collected inquiries and applications."""
+    admin_key = os.getenv("ADMIN_KEY", "miko_admin_2026")
+    if key != admin_key:
+        raise HTTPException(status_code=403, detail="Unauthorized access key.")
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT * FROM inquiries ORDER BY id DESC LIMIT 100")
+        inquiries = [dict(row) for row in cursor.fetchall()]
+
+        cursor.execute("SELECT * FROM applications ORDER BY id DESC LIMIT 100")
+        applications = [dict(row) for row in cursor.fetchall()]
+
+        cursor.execute("SELECT * FROM subscribers ORDER BY id DESC LIMIT 100")
+        subscribers = [dict(row) for row in cursor.fetchall()]
+
+        cursor.execute("SELECT COUNT(*) FROM inquiries")
+        total_inq = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM applications")
+        total_app = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM subscribers")
+        total_sub = cursor.fetchone()[0]
+
+        conn.close()
+        return {
+            "developer": "Miko Logic",
+            "summary": {
+                "totalInquiries": total_inq,
+                "totalApplications": total_app,
+                "totalSubscribers": total_sub
+            },
+            "inquiries": inquiries,
+            "applications": applications,
+            "subscribers": subscribers
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Mount static files
 static_dir = os.path.join(os.path.dirname(__file__), "static")

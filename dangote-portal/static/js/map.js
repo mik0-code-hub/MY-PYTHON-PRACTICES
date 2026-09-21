@@ -60,7 +60,10 @@ const AfricaMap = {
     // Update pills active state
     document.querySelectorAll('.country-pill-btn').forEach(p => p.classList.remove('active'));
     const activePill = document.getElementById(`pill-${country.country}`);
-    if (activePill) activePill.classList.add('active');
+    if (activePill) {
+      activePill.classList.add('active');
+      activePill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
 
     // Update details card
     const flagEl = document.getElementById('activeCountryFlag');
@@ -69,6 +72,7 @@ const AfricaMap = {
     const facilitiesEl = document.getElementById('activeCountryFacilities');
     const employeesEl = document.getElementById('activeCountryEmployees');
     const statusEl = document.getElementById('activeCountryStatus');
+    const cardEl = document.querySelector('.country-active-card');
 
     if (flagEl) flagEl.textContent = country.flag;
     if (titleEl) titleEl.textContent = country.country;
@@ -76,6 +80,17 @@ const AfricaMap = {
     if (facilitiesEl) facilitiesEl.textContent = country.facilities;
     if (employeesEl) employeesEl.textContent = country.employees;
     if (statusEl) statusEl.textContent = country.status;
+
+    if (cardEl) {
+      cardEl.style.transition = 'none';
+      cardEl.style.opacity = '0.7';
+      cardEl.style.transform = 'translateY(3px)';
+      requestAnimationFrame(() => {
+        cardEl.style.transition = 'all 0.3s ease';
+        cardEl.style.opacity = '1';
+        cardEl.style.transform = 'translateY(0)';
+      });
+    }
   }
 };
 
