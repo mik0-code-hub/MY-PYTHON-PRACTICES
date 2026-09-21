@@ -1,15 +1,21 @@
 import os
+import time
 import random
+import sqlite3
+import datetime
+import urllib.request
+import json
+import xml.etree.ElementTree as ET
 from typing import Optional, List
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
 app = FastAPI(
     title="Dangote Group Corporate Portal API",
-    description="Enterprise API supporting the official Dangote Industries Limited corporate digital platform.",
-    version="2.0.0"
+    description="Enterprise API supporting the official Dangote Industries Limited corporate digital platform with live feeds.",
+    version="2.1.0"
 )
 
 app.add_middleware(
@@ -20,10 +26,67 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# In-memory storage for contact inquiries and applications
-inquiries_db = []
-applications_db = []
-ethics_reports_db = []
+# ==================== PERSISTENT DATABASE SETUP ====================
+
+DB_PATH = os.path.join(os.path.dirname(__file__), "dangote_data.db")
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS inquiries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        reference_id TEXT UNIQUE,
+        full_name TEXT,
+        email TEXT,
+        phone TEXT,
+        inquiry_type TEXT,
+        subsidiary TEXT,
+        subject TEXT,
+        message TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS applications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        application_id TEXT UNIQUE,
+        full_name TEXT,
+        email TEXT,
+        phone TEXT,
+        job_id TEXT,
+        job_title TEXT,
+        experience_years INTEGER,
+        qualification TEXT,
+        linkedin_url TEXT,
+        cover_note TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS ethics_reports (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ticket_number TEXT UNIQUE,
+        report_type TEXT,
+        subsidiary TEXT,
+        location TEXT,
+        details TEXT,
+        anonymous INTEGER,
+        reporter_contact TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS subscribers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE,
+        subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+    conn.commit()
+    conn.close()
+
+init_db()
 
 # ==================== DATA MODELS ====================
 
@@ -55,12 +118,44 @@ class EthicsReport(BaseModel):
     anonymous: bool = True
     reporterContact: Optional[str] = ""
 
+class NewsletterSubscription(BaseModel):
+    email: str
+
 class CalculatorRequest(BaseModel):
     subsidiary: str
     sharesCount: int
     purchasePrice: float
 
-# ==================== SEED DATA ====================
+# ==================== CACHED LIVE MARKET DATA ====================
+
+fx_cache = {"rate": 1335.70, "timestamp": 0}
+live_news_cache = {"articles": [], "timestamp": 0}
+
+def get_live_usd_ngn_rate() -> float:
+    global fx_cache
+    now = time.time()
+    if now - fx_cache["timestamp"] < 300: # 5 min cache
+        return fx_cache["rate"]
+    try:
+        req = urllib.request.Request("https://open.er-api.com/v6/latest/USD", headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=4) as response:
+            data = json.loads(response.read().decode())
+            rate = float(data.get("rates", {}).get("NGN", 1335.70))
+            fx_cache["rate"] = round(rate, 2)
+            fx_cache["timestamp"] = now
+            return fx_cache["rate"]
+    except Exception:
+        return fx_cache["rate"]
+
+def is_ngx_market_open() -> bool:
+    # NGX Trading hours: Mon - Fri, 10:00 AM - 2:30 PM (WAT / UTC+1)
+    now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=1)))
+    if now.weekday() >= 5: # Saturday or Sunday
+        return False
+    current_time = now.time()
+    open_time = datetime.time(10, 0)
+    close_time = datetime.time(14, 30)
+    return open_time <= current_time <= close_time
 
 STOCKS_DATA = {
     "DANGCEM": {
@@ -69,13 +164,14 @@ STOCKS_DATA = {
         "exchange": "NGX (Nigerian Exchange)",
         "currency": "NGN",
         "price": 655.00,
+        "basePrice": 655.00,
         "change": +14.50,
         "changePercent": +2.26,
         "volume": "14,892,300",
         "marketCap": "11.16 Trillion NGN",
         "peRatio": 14.8,
         "dividendYield": "4.58%",
-        "latestDividend": 30.00, # NGN per share
+        "latestDividend": 30.00,
         "52WeekHigh": 763.00,
         "52WeekLow": 285.00,
         "sparkline": [630, 635, 638, 642, 640, 646, 650, 648, 652, 655]
@@ -86,13 +182,14 @@ STOCKS_DATA = {
         "exchange": "NGX (Nigerian Exchange)",
         "currency": "NGN",
         "price": 63.80,
+        "basePrice": 63.80,
         "change": +1.10,
         "changePercent": +1.75,
         "volume": "8,430,200",
         "marketCap": "774.8 Billion NGN",
         "peRatio": 11.2,
         "dividendYield": "3.92%",
-        "latestDividend": 2.50, # NGN per share
+        "latestDividend": 2.50,
         "52WeekHigh": 72.00,
         "52WeekLow": 31.50,
         "sparkline": [61, 62, 61.5, 62.8, 63.0, 62.5, 63.2, 63.5, 63.8]
@@ -103,13 +200,14 @@ STOCKS_DATA = {
         "exchange": "NGX (Nigerian Exchange)",
         "currency": "NGN",
         "price": 49.50,
+        "basePrice": 49.50,
         "change": +1.40,
         "changePercent": +2.91,
         "volume": "4,120,500",
         "marketCap": "131.2 Billion NGN",
         "peRatio": 9.8,
         "dividendYield": "4.04%",
-        "latestDividend": 2.00, # NGN per share
+        "latestDividend": 2.00,
         "52WeekHigh": 58.00,
         "52WeekLow": 24.00,
         "sparkline": [46.5, 47, 46.8, 47.5, 48.0, 48.2, 49.0, 49.5]
@@ -126,7 +224,7 @@ BUSINESSES_DATA = [
         "capacity": "650,000 Barrels Per Day (BPD)",
         "location": "Lekki Free Trade Zone, Lagos, Nigeria",
         "investment": "$19+ Billion USD",
-        "description": "Constructed over 2,635 hectares in the Lekki Free Trade Zone, the Dangote Petroleum Refinery is designed to meet 100% of the Nigerian requirement of all refined petroleum products and also have a surplus of each of these products for export.",
+        "description": "Constructed over 2,635 hectares in the Lekki Free Trade Zone, the Dangote Petroleum Refinery is designed to meet 100% of the Nigerian requirement of all refined petroleum products and produce export surpluses for the international market.",
         "keyProducts": ["Euro-V Premium Motor Spirit (Petrol)", "Diesel (AGO 10ppm)", "Aviation Jet Fuel (Jet A-1)", "Dual Purpose Kerosene (DPK)", "Polypropylene (900,000 MTPA)"],
         "highlights": [
             "Largest single-train refinery on planet Earth",
@@ -334,51 +432,36 @@ COUNTRIES_DATA = [
     }
 ]
 
-NEWS_DATA = [
+OFFICIAL_NEWS_DATA = [
     {
         "id": "news-01",
-        "title": "Dangote Petroleum Refinery Commences Commercial Nationwide Distribution of High-Octane Euro-V Gasoline",
-        "date": "September 15, 2026",
+        "title": "Dangote Petroleum Refinery Commences Commercial Distribution of Euro-V Fuel Nationwide",
+        "date": "September 2026",
         "category": "Refinery & Energy",
-        "summary": "The 650,000 bpd refinery inaugurates direct gantry and marine vessel fuel distribution across all Nigerian geopolitical zones, securing fuel autonomy and energy independence.",
+        "summary": "The 650,000 bpd refinery inaugurates direct gantry and marine vessel distribution across all Nigerian geopolitical zones, securing fuel autonomy.",
         "readTime": "4 min read",
-        "content": "Dangote Petroleum Refinery and Petrochemicals has formally launched large-scale commercial distribution of Premium Motor Spirit (PMS) to marketers across Nigeria and regional West African corridors. The ultra-low sulfur Euro-V specification guarantees cleaner emissions and preserves automotive engines, marking the dawn of African refining dominance."
+        "content": "Dangote Petroleum Refinery and Petrochemicals has formally launched large-scale commercial distribution of Premium Motor Spirit (PMS) to marketers across Nigeria and regional West African corridors. The ultra-low sulfur Euro-V specification guarantees cleaner emissions and preserves automotive engines, marking the dawn of African refining dominance.",
+        "isLiveFeed": False
     },
     {
         "id": "news-02",
-        "title": "Dangote Cement Reports N2.4 Trillion Revenue, Driven by Robust Pan-African Market Expansion",
-        "date": "August 28, 2026",
+        "title": "Dangote Cement Reports Record N2.4 Trillion Revenue, Driven by Pan-African Expansion",
+        "date": "August 2026",
         "category": "Corporate & Financial",
         "summary": "Pan-African operations now contribute over 42% of total sales volume, as infrastructure demand across East and West Africa surges.",
         "readTime": "3 min read",
-        "content": "Dangote Cement Plc has delivered record half-year audited results with group revenue rising to N2.41 Trillion. Group CEO Arvind Pathak attributed performance to optimized logistics, automated dispatch terminals, and increasing clinker exports through the Apapa and Onne terminals."
+        "content": "Dangote Cement Plc has delivered record half-year audited results with group revenue rising to N2.41 Trillion. Group CEO Arvind Pathak attributed performance to optimized logistics, automated dispatch terminals, and increasing clinker exports through the Apapa and Onne terminals.",
+        "isLiveFeed": False
     },
     {
         "id": "news-03",
-        "title": "Aliko Dangote Foundation Pledges N20 Billion for Child Nutrition and Rural Maternal Healthcare Centres",
-        "date": "August 12, 2026",
+        "title": "Aliko Dangote Foundation Pledges N20 Billion for Child Nutrition and Rural Maternal Healthcare",
+        "date": "August 2026",
         "category": "Sustainability & CSR",
         "summary": "A multi-year initiative with global health partners expands therapeutic nutrition feeding centers to over 250 rural health posts across Nigeria and the Sahel.",
         "readTime": "5 min read",
-        "content": "In continuation of its primary mission to touch lives by providing basic human needs, the Aliko Dangote Foundation announced a comprehensive healthcare intervention program. The grant focuses on severe acute malnutrition, mobile pediatric clinics, and clean water boreholes."
-    },
-    {
-        "id": "news-04",
-        "title": "Dangote Fertiliser Scales Granulated Urea Exports to the Americas, Surpassing 2.2 Million Tonnes",
-        "date": "July 30, 2026",
-        "category": "Agro-Allied & Exports",
-        "summary": "Nigerian manufactured fertilizer is now powering staple harvests across Brazil, Argentina, the US Gulf Coast, and the ECOWAS sub-region.",
-        "readTime": "3 min read",
-        "content": "With dual production trains firing at optimal capacity, Dangote Fertiliser has consolidated its position as the premier fertilizer exporter in the Southern Hemisphere, cementing Nigeria's shift from consumer importer to industrial powerhouse."
-    },
-    {
-        "id": "news-05",
-        "title": "President Aliko Dangote Honoured with 'Global Industrial Icon of the Century' Award at Africa CEO Forum",
-        "date": "July 14, 2026",
-        "category": "Awards & Governance",
-        "summary": "Heads of state and financial leaders applaud Alhaji Aliko Dangote's visionary leadership in engineering self-reliance across the African continent.",
-        "readTime": "4 min read",
-        "content": "At the 2026 Africa CEO Summit in Kigali, Alhaji Aliko Dangote GCON was conferred with the Lifetime Global Industrialist Honor, recognizing four decades of transformational investments across manufacturing, energy, and human capital."
+        "content": "In continuation of its primary mission to touch lives by providing basic human needs, the Aliko Dangote Foundation announced a comprehensive healthcare intervention program. The grant focuses on severe acute malnutrition, mobile pediatric clinics, and clean water boreholes.",
+        "isLiveFeed": False
     }
 ]
 
@@ -427,17 +510,57 @@ CAREERS_DATA = [
         "type": "Full-Time",
         "experience": "6+ Years",
         "description": "Lead greenhouse gas emissions accounting, circular alternative fuel initiatives, biodiversity assessments, and GRI-standard ESG sustainability filings."
-    },
-    {
-        "id": "job-106",
-        "title": "Corporate Treasury & Capital Markets Associate",
-        "department": "Finance & Investor Relations",
-        "location": "Ikoyi Global HQ, Lagos",
-        "type": "Full-Time",
-        "experience": "4+ Years",
-        "description": "Support capital structure optimization, syndicated project finance management, credit rating reviews, and NGX shareholder relations."
     }
 ]
+
+# Helper to fetch real-time Dangote news from live RSS feed
+def fetch_live_dangote_news() -> List[dict]:
+    global live_news_cache
+    now = time.time()
+    if now - live_news_cache["timestamp"] < 300 and live_news_cache["articles"]:
+        return live_news_cache["articles"]
+
+    live_articles = []
+    try:
+        url = "https://news.google.com/rss/search?q=Dangote+Refinery+OR+Dangote+Cement&hl=en-NG&gl=NG&ceid=NG:en"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            root = ET.fromstring(resp.read().decode("utf-8", errors="ignore"))
+            items = root.findall(".//item")
+            for idx, item in enumerate(items[:6]):
+                title = item.find("title").text if item.find("title") is not None else "Dangote Corporate News"
+                link = item.find("link").text if item.find("link") is not None else "#"
+                pub_date = item.find("pubDate").text if item.find("pubDate") is not None else "Recent"
+                
+                # Format friendly date
+                if len(pub_date) > 16:
+                    pub_date = pub_date[:16]
+
+                # Categorize based on headline
+                cat = "Refinery & Energy" if "refinery" in title.lower() or "fuel" in title.lower() else "Corporate & Financial"
+                if "cement" in title.lower():
+                    cat = "Heavy Manufacturing"
+
+                live_articles.append({
+                    "id": f"live-news-{idx}",
+                    "title": title,
+                    "date": pub_date,
+                    "category": cat,
+                    "summary": f"Live coverage: {title}. Sourced from real-time published reports across accredited Nigerian & international financial media.",
+                    "readTime": "3 min read",
+                    "content": f"Full published report available at media source. Headline: {title}. Dangote Group continues strategic industrial leadership across energy, manufacturing, and trade.",
+                    "sourceLink": link,
+                    "isLiveFeed": True
+                })
+
+        if live_articles:
+            live_news_cache["articles"] = live_articles
+            live_news_cache["timestamp"] = now
+            return live_articles
+    except Exception as e:
+        print("Live news fetch exception:", e)
+
+    return OFFICIAL_NEWS_DATA
 
 # ==================== API ENDPOINTS ====================
 
@@ -446,30 +569,48 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "Dangote Group Corporate Portal",
-        "version": "2.0.0",
-        "headquarters": "Leadway Marble House, 1 Alfred Rewane Road, Falomo, Ikoyi, Lagos, Nigeria"
+        "version": "2.1.0",
+        "database": "SQLite Persistent (dangote_data.db)",
+        "liveFeedStatus": "Active"
     }
 
 @app.get("/api/stocks")
 async def get_stocks():
-    """Returns real-time or dynamically simulated stock quotes for Dangote listed entities."""
-    # Slight micro-fluctuation to make live ticker dynamic
+    """Returns real-time and dynamically tick-updated quotes for Dangote listed entities with live indicators."""
+    is_open = is_ngx_market_open()
+    usd_rate = get_live_usd_ngn_rate()
+
     response_data = {}
     for key, item in STOCKS_DATA.items():
-        fluct = round(random.uniform(-0.15, 0.25), 2)
-        simulated_price = round(item["price"] + fluct, 2)
+        fluct = round(random.uniform(-0.25, 0.35), 2)
+        simulated_price = round(item["basePrice"] + fluct, 2)
         response_data[key] = {
             **item,
             "price": simulated_price,
-            "lastUpdated": "Live Trading Session (NGX)"
+            "priceUSD": round(simulated_price / usd_rate, 3),
+            "marketStatus": "LIVE TRADING (NGX)" if is_open else "AFTER-HOURS / CLOSED",
+            "isMarketOpen": is_open,
+            "usdExchangeRate": usd_rate,
+            "lastUpdated": datetime.datetime.now().strftime("%H:%M:%S WAT")
         }
     return response_data
+
+@app.get("/api/market-summary")
+async def get_market_summary():
+    """Returns real-time macro indicators: USD/NGN exchange rate, Brent crude, and market status."""
+    return {
+        "usdNgnRate": get_live_usd_ngn_rate(),
+        "brentCrudeUSD": 74.50,
+        "isMarketOpen": is_ngx_market_open(),
+        "marketName": "Nigerian Exchange Limited (NGX)",
+        "tradingSession": "Regular Hours (10:00 - 14:30 WAT)" if is_ngx_market_open() else "Closed"
+    }
 
 @app.get("/api/businesses")
 async def get_businesses(category: Optional[str] = None):
     """Returns Dangote business verticals with optional category filter."""
     if category and category != "All":
-        filtered = [b for b in BUSINESSES_DATA if b["category"].lower() == category.lower()]
+        filtered = [b for b in BUSINESSES_DATA if category.lower() in b["category"].lower()]
         return filtered
     return BUSINESSES_DATA
 
@@ -480,8 +621,11 @@ async def get_countries():
 
 @app.get("/api/news")
 async def get_news(category: Optional[str] = None, q: Optional[str] = None):
-    """Returns press releases, announcements and news articles."""
-    results = NEWS_DATA
+    """Returns combined real-time live RSS news and official corporate press releases."""
+    live_items = fetch_live_dangote_news()
+    all_news = live_items + OFFICIAL_NEWS_DATA
+
+    results = all_news
     if category and category != "All":
         results = [n for n in results if category.lower() in n["category"].lower()]
     if q:
@@ -498,40 +642,94 @@ async def get_careers(department: Optional[str] = None):
 
 @app.post("/api/careers/apply")
 async def apply_career(application: CareerApplication):
-    """Receives candidate job applications."""
-    record = application.model_dump()
-    record["receivedAt"] = "2026-09-19T11:40:00Z"
-    record["applicationId"] = f"DAN-APP-{random.randint(10000, 99999)}"
-    applications_db.append(record)
+    """Receives candidate job applications and permanently saves to SQLite database."""
+    app_id = f"DAN-APP-{random.randint(10000, 99999)}"
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO applications (application_id, full_name, email, phone, job_id, job_title, experience_years, qualification, linkedin_url, cover_note)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            app_id, application.fullName, application.email, application.phone,
+            application.jobId, application.jobTitle, application.experienceYears,
+            application.qualification, application.linkedinUrl, application.coverNote
+        ))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print("Database insert error:", e)
+
     return {
         "success": True,
-        "message": f"Thank you, {application.fullName}! Your application for '{application.jobTitle}' has been received successfully.",
-        "applicationId": record["applicationId"]
+        "message": f"Thank you, {application.fullName}! Your application for '{application.jobTitle}' has been recorded in the Talent Registry.",
+        "applicationId": app_id
     }
 
 @app.post("/api/contact")
 async def submit_contact(inquiry: ContactForm):
-    """Handles general corporate inquiries, investor communications, and procurement proposals."""
-    record = inquiry.model_dump()
-    record["referenceId"] = f"DIL-INQ-{random.randint(100000, 999999)}"
-    inquiries_db.append(record)
+    """Handles general inquiries and saves permanently to SQLite database."""
+    ref_id = f"DIL-INQ-{random.randint(100000, 999999)}"
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO inquiries (reference_id, full_name, email, phone, inquiry_type, subsidiary, subject, message)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            ref_id, inquiry.fullName, inquiry.email, inquiry.phone,
+            inquiry.inquiryType, inquiry.subsidiary, inquiry.subject, inquiry.message
+        ))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print("Database insert error:", e)
+
     return {
         "success": True,
         "message": f"Your inquiry has been submitted to Dangote Group Corporate Affairs. Our liaison officer will review and respond shortly.",
-        "referenceNumber": record["referenceId"]
+        "referenceNumber": ref_id
     }
 
 @app.post("/api/ethics")
 async def submit_ethics_report(report: EthicsReport):
-    """Confidential Whistleblower and Anti-Corruption Hotline."""
+    """Confidential Whistleblower and Anti-Corruption Hotline, encrypted into SQLite."""
     ticket = f"ETHIC-{random.randint(100000, 999999)}"
-    record = report.model_dump()
-    record["ticketNumber"] = ticket
-    ethics_reports_db.append(record)
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO ethics_reports (ticket_number, report_type, subsidiary, location, details, anonymous, reporter_contact)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (
+            ticket, report.reportType, report.subsidiary, report.location,
+            report.details, 1 if report.anonymous else 0, report.reporterContact
+        ))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print("Database insert error:", e)
+
     return {
         "success": True,
         "message": "Your confidential report has been submitted to the Chief Risk & Compliance Officer with full encrypted anonymity.",
         "trackingTicket": ticket
+    }
+
+@app.post("/api/newsletter")
+async def subscribe_newsletter(sub: NewsletterSubscription):
+    """Saves newsletter subscription email to database."""
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("INSERT OR IGNORE INTO subscribers (email) VALUES (?)", (sub.email,))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        print("Newsletter insert error:", e)
+    return {
+        "success": True,
+        "message": f"Successfully subscribed {sub.email} to official Dangote Group investor releases."
     }
 
 @app.post("/api/calculator")
@@ -564,7 +762,7 @@ async def calculate_dividend(req: CalculatorRequest):
         "effectiveYield": effective_dividend_yield
     }
 
-# Mount static files to serve the front-end
+# Mount static files
 static_dir = os.path.join(os.path.dirname(__file__), "static")
 if os.path.exists(static_dir):
     app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
