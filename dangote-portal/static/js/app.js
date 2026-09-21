@@ -31,6 +31,9 @@ const App = {
     await this.loadBusinesses();
     await this.loadNews();
     await this.loadCareers();
+
+    // Start background live news synchronization
+    this.setupNewsAutoRefresh();
   },
 
   /* ==================== THEME CONTROLLER ==================== */
@@ -334,30 +337,90 @@ const App = {
     grid.innerHTML = html;
   },
 
-  /* ==================== LOAD NEWS ==================== */
+  /* ==================== LOAD & RENDER NEWS ==================== */
   async loadNews() {
     this.allNews = await window.API.getNews();
+    this.renderNewsGrid(this.allNews);
+  },
+
+  renderNewsGrid(newsItems) {
     const grid = document.getElementById('newsGrid');
     if (!grid) return;
 
+    if (!newsItems || newsItems.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 48px 20px; background: var(--surface-card); border-radius: var(--radius-lg); border: 1px solid var(--surface-border);">
+          <span style="font-size: 2rem; display: block; margin-bottom: 12px;">📰</span>
+          <h4 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 6px;">No articles found</h4>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">Try adjusting your search terms or keywords.</p>
+        </div>
+      `;
+      return;
+    }
+
     let html = '';
-    this.allNews.forEach(n => {
+    newsItems.forEach(n => {
+      const isLive = n.isLiveFeed;
+      const liveBadge = isLive 
+        ? `<span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.7rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;"><span style="width: 5px; height: 5px; border-radius: 50%; background: #10B981; display: inline-block;"></span>LIVE</span>` 
+        : '';
+      const publisherName = n.publisher ? `📰 ${n.publisher}` : '📰 Dangote Corporate';
+      
       html += `
         <div class="news-card" onclick="openNewsModal('${n.id}')">
           <div class="news-meta-row">
-            <span class="badge badge-red">${n.category}</span>
-            <span class="news-date">${n.date}</span>
+            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+              <span class="badge badge-red">${n.category}</span>
+              ${liveBadge}
+            </div>
+            <span class="news-date" title="Publication Date & Time (WAT)">🕒 ${n.date}</span>
           </div>
+          <div class="news-publisher">${publisherName}</div>
           <h4 class="news-card-title">${n.title}</h4>
           <p class="news-card-summary">${n.summary}</p>
           <div class="news-card-footer">
-            <span>Read Article</span>
-            <span>${n.readTime} →</span>
+            <span>Read Full Dispatch</span>
+            <span>${n.readTime || '3 min read'} →</span>
           </div>
         </div>
       `;
     });
     grid.innerHTML = html;
+  },
+
+  renderNewsFromSearch(query) {
+    if (!this.allNews) return;
+    const q = (query || '').trim().toLowerCase();
+    if (!q) {
+      this.renderNewsGrid(this.allNews);
+      return;
+    }
+    const filtered = this.allNews.filter(n => 
+      (n.title && n.title.toLowerCase().includes(q)) ||
+      (n.summary && n.summary.toLowerCase().includes(q)) ||
+      (n.publisher && n.publisher.toLowerCase().includes(q)) ||
+      (n.category && n.category.toLowerCase().includes(q))
+    );
+    this.renderNewsGrid(filtered);
+  },
+
+  setupNewsAutoRefresh() {
+    // Poll for fresh live news every 2 minutes so readers always get the latest real-time news
+    setInterval(async () => {
+      try {
+        const fresh = await window.API.getNews();
+        if (fresh && fresh.length > 0) {
+          this.allNews = fresh;
+          const searchInput = document.getElementById('newsSearchInput');
+          // Only re-render if user is not actively searching
+          if (!searchInput || !searchInput.value.trim()) {
+            this.renderNewsGrid(this.allNews);
+          }
+        }
+      } catch (e) {
+        console.warn('Silent news background poll error', e);
+      }
+    }, 120000);
   },
 
   /* ==================== LOAD CAREERS ==================== */
@@ -584,19 +647,34 @@ function openNewsModal(newsId) {
   const modalTitle = document.getElementById('detailModalTitle');
   const modalBody = document.getElementById('detailModalBody');
 
+  const publisher = news.publisher || 'Dangote Corporate Communications';
+  const isLive = news.isLiveFeed;
+  const externalLinkBtn = (isLive && news.sourceLink && news.sourceLink !== '#')
+    ? `<div style="margin-top: 20px;">
+         <a href="${news.sourceLink}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+           <span>Read Original Coverage on ${publisher}</span>
+           <span>↗</span>
+         </a>
+       </div>`
+    : '';
+
   modalTitle.textContent = news.title;
   modalBody.innerHTML = `
-    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 18px;">
+    <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--surface-border-subtle);">
       <span class="badge badge-red">${news.category}</span>
-      <span style="color: var(--text-muted); font-size: 0.85rem;">${news.date}</span>
-      <span style="color: var(--text-muted); font-size: 0.85rem;">• ${news.readTime}</span>
+      ${isLive ? '<span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.72rem; font-weight: 700;">● LIVE PRESS FEED</span>' : ''}
+      <span style="color: var(--dangote-red); font-weight: 700; font-size: 0.85rem;">📰 ${publisher}</span>
+      <span style="color: var(--text-muted); font-size: 0.85rem; margin-left: auto;">🕒 Published: ${news.date}</span>
     </div>
     <div style="border-left: 3px solid var(--dangote-red); padding-left: 16px; margin-bottom: 20px;">
       <p style="font-size: 1.05rem; font-weight: 600; color: var(--text-primary); line-height: 1.6;">${news.summary}</p>
     </div>
     <div style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.8;">
       <p style="margin-bottom: 16px;">${news.content}</p>
-      <p>For additional media inquiries, investor statements, or high-resolution press collateral, please contact the Dangote Group Corporate Communications Directorate via <a href="mailto:media@dangote.com" style="color: var(--dangote-red); font-weight: 700;">media@dangote.com</a>.</p>
+      ${externalLinkBtn}
+      <p style="margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--surface-border); font-size: 0.82rem; color: var(--text-muted);">
+        For corporate press statements, accredited media credentials, or investor inquiries, contact the Dangote Group Corporate Communications Directorate via <a href="mailto:media@dangote.com" style="color: var(--dangote-red); font-weight: 700;">media@dangote.com</a>.
+      </p>
     </div>
   `;
 

@@ -762,12 +762,24 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .news-date {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.news-publisher {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--dangote-red);
+  margin-bottom: 10px;
+  letter-spacing: 0.01em;
 }
 
 .news-card-title {

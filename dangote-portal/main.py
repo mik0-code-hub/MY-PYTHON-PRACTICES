@@ -6,6 +6,7 @@ import datetime
 import urllib.request
 import json
 import xml.etree.ElementTree as ET
+from email.utils import parsedate_to_datetime
 from typing import Optional, List
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -432,35 +433,46 @@ COUNTRIES_DATA = [
     }
 ]
 
+WAT_TZ = datetime.timezone(datetime.timedelta(hours=1))
+
 OFFICIAL_NEWS_DATA = [
     {
         "id": "news-01",
         "title": "Dangote Petroleum Refinery Commences Commercial Distribution of Euro-V Fuel Nationwide",
-        "date": "September 2026",
+        "date": "21 Sep 2026 • 08:00 AM WAT",
+        "publisher": "Dangote Corporate Communications",
+        "timestamp": 1789977600.0,
         "category": "Refinery & Energy",
         "summary": "The 650,000 bpd refinery inaugurates direct gantry and marine vessel distribution across all Nigerian geopolitical zones, securing fuel autonomy.",
         "readTime": "4 min read",
         "content": "Dangote Petroleum Refinery and Petrochemicals has formally launched large-scale commercial distribution of Premium Motor Spirit (PMS) to marketers across Nigeria and regional West African corridors. The ultra-low sulfur Euro-V specification guarantees cleaner emissions and preserves automotive engines, marking the dawn of African refining dominance.",
+        "sourceLink": "#",
         "isLiveFeed": False
     },
     {
         "id": "news-02",
         "title": "Dangote Cement Reports Record N2.4 Trillion Revenue, Driven by Pan-African Expansion",
-        "date": "August 2026",
+        "date": "20 Sep 2026 • 04:30 PM WAT",
+        "publisher": "Dangote Investor Relations",
+        "timestamp": 1789921800.0,
         "category": "Corporate & Financial",
         "summary": "Pan-African operations now contribute over 42% of total sales volume, as infrastructure demand across East and West Africa surges.",
         "readTime": "3 min read",
         "content": "Dangote Cement Plc has delivered record half-year audited results with group revenue rising to N2.41 Trillion. Group CEO Arvind Pathak attributed performance to optimized logistics, automated dispatch terminals, and increasing clinker exports through the Apapa and Onne terminals.",
+        "sourceLink": "#",
         "isLiveFeed": False
     },
     {
         "id": "news-03",
         "title": "Aliko Dangote Foundation Pledges N20 Billion for Child Nutrition and Rural Maternal Healthcare",
-        "date": "August 2026",
+        "date": "19 Sep 2026 • 11:15 AM WAT",
+        "publisher": "Aliko Dangote Foundation",
+        "timestamp": 1789816500.0,
         "category": "Sustainability & CSR",
         "summary": "A multi-year initiative with global health partners expands therapeutic nutrition feeding centers to over 250 rural health posts across Nigeria and the Sahel.",
         "readTime": "5 min read",
         "content": "In continuation of its primary mission to touch lives by providing basic human needs, the Aliko Dangote Foundation announced a comprehensive healthcare intervention program. The grant focuses on severe acute malnutrition, mobile pediatric clinics, and clean water boreholes.",
+        "sourceLink": "#",
         "isLiveFeed": False
     }
 ]
@@ -513,47 +525,72 @@ CAREERS_DATA = [
     }
 ]
 
+# Helper to parse RSS dates into friendly formatted date and time in West Africa Time
+def parse_news_datetime(pub_date_str: str) -> tuple[str, float]:
+    try:
+        dt = parsedate_to_datetime(pub_date_str)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=datetime.timezone.utc)
+        dt_wat = dt.astimezone(WAT_TZ)
+        friendly = dt_wat.strftime("%d %b %Y • %I:%M %p WAT")
+        return friendly, dt.timestamp()
+    except Exception:
+        return pub_date_str, time.time()
+
 # Helper to fetch real-time Dangote news from live RSS feed
 def fetch_live_dangote_news() -> List[dict]:
     global live_news_cache
     now = time.time()
-    if now - live_news_cache["timestamp"] < 300 and live_news_cache["articles"]:
+    # Cache for 3 minutes so fresh news updates continuously
+    if now - live_news_cache["timestamp"] < 180 and live_news_cache["articles"]:
         return live_news_cache["articles"]
 
     live_articles = []
     try:
-        url = "https://news.google.com/rss/search?q=Dangote+Refinery+OR+Dangote+Cement&hl=en-NG&gl=NG&ceid=NG:en"
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        url = "https://news.google.com/rss/search?q=Dangote+Refinery+OR+Dangote+Cement+OR+Dangote+Group&hl=en-NG&gl=NG&ceid=NG:en"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+        with urllib.request.urlopen(req, timeout=6) as resp:
             root = ET.fromstring(resp.read().decode("utf-8", errors="ignore"))
             items = root.findall(".//item")
-            for idx, item in enumerate(items[:6]):
-                title = item.find("title").text if item.find("title") is not None else "Dangote Corporate News"
+            for idx, item in enumerate(items[:12]):
+                raw_title = item.find("title").text if item.find("title") is not None else "Dangote Corporate News"
                 link = item.find("link").text if item.find("link") is not None else "#"
-                pub_date = item.find("pubDate").text if item.find("pubDate") is not None else "Recent"
-                
-                # Format friendly date
-                if len(pub_date) > 16:
-                    pub_date = pub_date[:16]
+                raw_pub_date = item.find("pubDate").text if item.find("pubDate") is not None else ""
+
+                # Extract news publisher/source if available
+                publisher = "Financial Media"
+                clean_title = raw_title
+                if " - " in raw_title:
+                    parts = raw_title.rsplit(" - ", 1)
+                    clean_title = parts[0].strip()
+                    publisher = parts[1].strip()
+
+                formatted_date, ts = parse_news_datetime(raw_pub_date)
 
                 # Categorize based on headline
-                cat = "Refinery & Energy" if "refinery" in title.lower() or "fuel" in title.lower() else "Corporate & Financial"
-                if "cement" in title.lower():
+                cat = "Refinery & Energy" if any(w in clean_title.lower() for w in ["refinery", "fuel", "petroleum", "oil", "pms"]) else "Corporate & Financial"
+                if "cement" in clean_title.lower():
                     cat = "Heavy Manufacturing"
+                elif "fertiliser" in clean_title.lower() or "fertilizer" in clean_title.lower():
+                    cat = "Agriculture"
 
                 live_articles.append({
                     "id": f"live-news-{idx}",
-                    "title": title,
-                    "date": pub_date,
+                    "title": clean_title,
+                    "date": formatted_date,
+                    "timestamp": ts,
+                    "publisher": publisher,
                     "category": cat,
-                    "summary": f"Live coverage: {title}. Sourced from real-time published reports across accredited Nigerian & international financial media.",
+                    "summary": f"Live breaking coverage: {clean_title}. Sourced from {publisher} accredited financial and industrial journalism.",
                     "readTime": "3 min read",
-                    "content": f"Full published report available at media source. Headline: {title}. Dangote Group continues strategic industrial leadership across energy, manufacturing, and trade.",
+                    "content": f"Full published report from accredited financial press. Headline: {clean_title}. Published by {publisher} on {formatted_date}. Dangote Group continues strategic industrial leadership across African energy, manufacturing, and global trade.",
                     "sourceLink": link,
                     "isLiveFeed": True
                 })
 
         if live_articles:
+            # Sort newest first
+            live_articles.sort(key=lambda a: a.get("timestamp", 0), reverse=True)
             live_news_cache["articles"] = live_articles
             live_news_cache["timestamp"] = now
             return live_articles
@@ -621,16 +658,18 @@ async def get_countries():
 
 @app.get("/api/news")
 async def get_news(category: Optional[str] = None, q: Optional[str] = None):
-    """Returns combined real-time live RSS news and official corporate press releases."""
+    """Returns combined real-time live RSS news and official corporate press releases sorted newest first."""
     live_items = fetch_live_dangote_news()
     all_news = live_items + OFFICIAL_NEWS_DATA
+    # Sort all news chronologically descending
+    all_news.sort(key=lambda a: a.get("timestamp", 0), reverse=True)
 
     results = all_news
     if category and category != "All":
         results = [n for n in results if category.lower() in n["category"].lower()]
     if q:
         query = q.lower()
-        results = [n for n in results if query in n["title"].lower() or query in n["summary"].lower()]
+        results = [n for n in results if query in n["title"].lower() or query in n["summary"].lower() or query in n.get("publisher", "").lower()]
     return results
 
 @app.get("/api/careers")
