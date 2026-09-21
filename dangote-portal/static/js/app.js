@@ -248,7 +248,7 @@ const App = {
         // Search in careers
         this.allCareers.forEach(c => {
           if (c.title.toLowerCase().includes(query) || c.department.toLowerCase().includes(query)) {
-            hits.push({ type: 'Careers', title: c.title, desc: `${c.department} • ${c.location}`, action: () => { toggleSearch(false); openApplyModal(c.id, c.title); } });
+            hits.push({ type: 'Careers', title: c.title, desc: `${c.department} • ${c.location}`, action: () => { toggleSearch(false); openApplyModal(c.id, c.title, c.applyUrl); } });
           }
         });
 
@@ -431,9 +431,16 @@ const App = {
 
     let html = '';
     this.allCareers.forEach(job => {
+      const applyUrl = job.applyUrl || 'https://careers.dangote.com';
       html += `
         <div class="job-card">
-          <span class="job-dept-badge">${job.department}</span>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span class="job-dept-badge" style="margin-bottom: 0;">${job.department}</span>
+            <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 0.72rem; font-weight: 700; color: #10b981; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.25); padding: 2px 8px; border-radius: 9999px;">
+              <span style="width: 6px; height: 6px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+              LIVE VACANCY
+            </span>
+          </div>
           <h3 class="job-title">${job.title}</h3>
           <div class="job-pills-row">
             <span>📍 ${job.location}</span>
@@ -441,11 +448,16 @@ const App = {
             <span>⭐ ${job.experience}</span>
           </div>
           <p class="job-desc">${job.description}</p>
-          <div class="job-footer">
-            <span style="font-size: 0.8rem; color: var(--text-muted);">Ref ID: ${job.id.toUpperCase()}</span>
-            <button class="btn btn-primary btn-sm" onclick="openApplyModal('${job.id}', '${job.title.replace(/'/g, "\\'")}')">
-              Apply Now
-            </button>
+          <div class="job-footer" style="flex-wrap: wrap; gap: 10px;">
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Ref: ${job.id.toUpperCase()}</span>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <a href="${applyUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 4px; text-decoration: none;">
+                Apply on ATS ↗
+              </a>
+              <button class="btn btn-secondary btn-sm" onclick="openApplyModal('${job.id}', '${job.title.replace(/'/g, "\\'")}', '${applyUrl}')">
+                Quick Apply
+              </button>
+            </div>
           </div>
         </div>
       `;
@@ -710,13 +722,32 @@ function openStockModal(symbol) {
   modal.classList.add('active');
 }
 
-function openApplyModal(jobId, jobTitle) {
+function openApplyModal(jobId, jobTitle, applyUrl) {
   const modal = document.getElementById('applyJobModal');
   const modalTitle = document.getElementById('applyJobTitle');
   const jobIdInput = document.getElementById('applyJobIdInput');
+  const notice = document.getElementById('applyOfficialLinkNotice');
 
   if (modalTitle) modalTitle.textContent = `Apply for ${jobTitle}`;
   if (jobIdInput) jobIdInput.value = jobId;
+
+  if (notice) {
+    if (applyUrl) {
+      notice.innerHTML = `
+        <div style="background: rgba(10, 88, 202, 0.08); border: 1px solid rgba(10, 88, 202, 0.25); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px; font-size: 0.85rem; color: var(--text-color); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <strong>Official Listing:</strong> This opening is published directly on Dangote SAP SuccessFactors.
+          </div>
+          <a href="${applyUrl}" target="_blank" rel="noopener noreferrer" style="color: var(--primary-color, #0a58ca); font-weight: 600; text-decoration: underline;">
+            Apply on Official ATS ↗
+          </a>
+        </div>
+      `;
+    } else {
+      notice.innerHTML = '';
+    }
+  }
+
   modal?.classList.add('active');
 }
 

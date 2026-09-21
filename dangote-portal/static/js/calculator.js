@@ -4,16 +4,42 @@
 
 const DividendCalculator = {
   defaultPrices: {
-    "DANGCEM": 655.00,
-    "DANGSUGAR": 63.80,
-    "NASCON": 49.50
+    "DANGCEM": 1050.00,
+    "DANGSUGAR": 70.50,
+    "NASCON": 176.00
   },
 
-  init() {
+  async init() {
     const subSelect = document.getElementById('calcSubsidiary');
     const slider = document.getElementById('calcSharesSlider');
     const input = document.getElementById('calcSharesInput');
     const priceInput = document.getElementById('calcPurchasePrice');
+
+    // Dynamically synchronize calculator with live NGX stock quotes
+    try {
+      const liveStocks = await window.API.getStocks();
+      if (liveStocks) {
+        for (const sym in liveStocks) {
+          if (liveStocks[sym] && liveStocks[sym].price) {
+            this.defaultPrices[sym] = liveStocks[sym].price;
+          }
+        }
+        // Update select option labels with real-time live market prices
+        if (subSelect) {
+          const optDangcem = subSelect.querySelector('option[value="DANGCEM"]');
+          const optSugar = subSelect.querySelector('option[value="DANGSUGAR"]');
+          const optNascon = subSelect.querySelector('option[value="NASCON"]');
+          if (optDangcem) optDangcem.textContent = `Dangote Cement Plc (DANGCEM - ₦${this.defaultPrices.DANGCEM.toFixed(2)})`;
+          if (optSugar) optSugar.textContent = `Dangote Sugar Refinery Plc (DANGSUGAR - ₦${this.defaultPrices.DANGSUGAR.toFixed(2)})`;
+          if (optNascon) optNascon.textContent = `NASCON Allied Industries Plc (NASCON - ₦${this.defaultPrices.NASCON.toFixed(2)})`;
+        }
+        if (priceInput && subSelect && this.defaultPrices[subSelect.value]) {
+          priceInput.value = (this.defaultPrices[subSelect.value] * 0.85).toFixed(2);
+        }
+      }
+    } catch (err) {
+      console.warn('Could not sync calculator with live stocks', err);
+    }
 
     if (slider && input) {
       slider.addEventListener('input', (e) => {
@@ -31,7 +57,7 @@ const DividendCalculator = {
       subSelect.addEventListener('change', (e) => {
         const symbol = e.target.value;
         if (priceInput && this.defaultPrices[symbol]) {
-          priceInput.value = (this.defaultPrices[symbol] * 0.85).toFixed(2); // simulated entry discount
+          priceInput.value = (this.defaultPrices[symbol] * 0.85).toFixed(2);
         }
         this.recalculate();
       });

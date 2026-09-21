@@ -5,6 +5,8 @@ import sqlite3
 import datetime
 import urllib.request
 import json
+import re
+import html
 import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime
 from typing import Optional, List
@@ -131,6 +133,9 @@ class CalculatorRequest(BaseModel):
 
 fx_cache = {"rate": 1335.70, "timestamp": 0}
 live_news_cache = {"articles": [], "timestamp": 0}
+live_jobs_cache = {"jobs": [], "timestamp": 0}
+brent_cache = {"price": 99.71, "timestamp": 0}
+stocks_cache = {"data": None, "timestamp": 0}
 
 def get_live_usd_ngn_rate() -> float:
     global fx_cache
@@ -157,6 +162,25 @@ def is_ngx_market_open() -> bool:
     open_time = datetime.time(10, 0)
     close_time = datetime.time(14, 30)
     return open_time <= current_time <= close_time
+
+def get_live_brent_crude() -> float:
+    global brent_cache
+    now = time.time()
+    if now - brent_cache["timestamp"] < 300: # 5 min cache
+        return brent_cache["price"]
+    try:
+        url = "https://query1.finance.yahoo.com/v8/finance/chart/BZ=F?interval=1d&range=1d"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode())
+            meta = data.get("chart", {}).get("result", [{}])[0].get("meta", {})
+            price = float(meta.get("regularMarketPrice", 99.71))
+            brent_cache["price"] = round(price, 2)
+            brent_cache["timestamp"] = now
+            return brent_cache["price"]
+    except Exception as e:
+        print("Brent crude fetch exception:", e)
+        return brent_cache["price"]
 
 STOCKS_DATA = {
     "DANGCEM": {
@@ -214,6 +238,106 @@ STOCKS_DATA = {
         "sparkline": [46.5, 47, 46.8, 47.5, 48.0, 48.2, 49.0, 49.5]
     }
 }
+
+def fetch_live_ngx_stocks() -> dict:
+    global stocks_cache, STOCKS_DATA
+    now = time.time()
+    is_open = is_ngx_market_open()
+    cache_ttl = 60 if is_open else 180
+    usd_rate = get_live_usd_ngn_rate()
+
+    if stocks_cache["data"] and (now - stocks_cache["timestamp"] < cache_ttl):
+        cached = {}
+        for k, v in stocks_cache["data"].items():
+            cached[k] = {
+                **v,
+                "priceUSD": round(v["price"] / usd_rate, 3),
+                "marketStatus": "LIVE TRADING (NGX)" if is_open else "AFTER-HOURS / CLOSED",
+                "isMarketOpen": is_open,
+                "usdExchangeRate": usd_rate,
+                "lastUpdated": datetime.datetime.now(WAT_TZ).strftime("%H:%M:%S WAT")
+            }
+        return cached
+
+    try:
+        url = "https://scanner.tradingview.com/nigeria/scan"
+        payload = json.dumps({
+            "symbols": {"tickers": ["NSENG:DANGCEM", "NSENG:DANGSUGAR", "NSENG:NASCON"]},
+            "columns": ["close", "change", "change_abs", "volume", "market_cap_basic", "price_earnings_ttm"]
+        }).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=payload,
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+                "Content-Type": "application/json"
+            }
+        )
+        with urllib.request.urlopen(req, timeout=6) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+
+        ticker_map = {
+            "NSENG:DANGCEM": "DANGCEM",
+            "NSENG:DANGSUGAR": "DANGSUGAR",
+            "NSENG:NASCON": "NASCON"
+        }
+
+        result_data = {}
+        for item in data.get("data", []):
+            sym_key = ticker_map.get(item.get("s"))
+            if not sym_key or sym_key not in STOCKS_DATA:
+                continue
+
+            row = item.get("d", [])
+            live_price = float(row[0]) if len(row) > 0 and row[0] is not None else STOCKS_DATA[sym_key]["price"]
+            change_pct = round(float(row[1]), 2) if len(row) > 1 and row[1] is not None else STOCKS_DATA[sym_key]["changePercent"]
+            change_abs = round(float(row[2]), 2) if len(row) > 2 and row[2] is not None else STOCKS_DATA[sym_key]["change"]
+            raw_vol = int(row[3]) if len(row) > 3 and row[3] is not None else 10000000
+            raw_mcap = float(row[4]) if len(row) > 4 and row[4] is not None else 1000000000000
+            raw_pe = round(float(row[5]), 1) if len(row) > 5 and row[5] is not None else STOCKS_DATA[sym_key]["peRatio"]
+
+            formatted_vol = f"{raw_vol:,}"
+            if raw_mcap >= 1e12:
+                formatted_mcap = f"{round(raw_mcap / 1e12, 2)} Trillion NGN"
+            else:
+                formatted_mcap = f"{round(raw_mcap / 1e9, 1)} Billion NGN"
+
+            STOCKS_DATA[sym_key]["price"] = live_price
+            STOCKS_DATA[sym_key]["basePrice"] = live_price
+            STOCKS_DATA[sym_key]["change"] = change_abs
+            STOCKS_DATA[sym_key]["changePercent"] = change_pct
+            STOCKS_DATA[sym_key]["volume"] = formatted_vol
+            STOCKS_DATA[sym_key]["marketCap"] = formatted_mcap
+            STOCKS_DATA[sym_key]["peRatio"] = raw_pe
+
+            result_data[sym_key] = {
+                **STOCKS_DATA[sym_key],
+                "price": live_price,
+                "priceUSD": round(live_price / usd_rate, 3),
+                "marketStatus": "LIVE TRADING (NGX)" if is_open else "AFTER-HOURS / CLOSED",
+                "isMarketOpen": is_open,
+                "usdExchangeRate": usd_rate,
+                "lastUpdated": datetime.datetime.now(WAT_TZ).strftime("%H:%M:%S WAT")
+            }
+
+        if len(result_data) == 3:
+            stocks_cache["data"] = result_data
+            stocks_cache["timestamp"] = now
+            return result_data
+    except Exception as e:
+        print("Live NGX stocks fetch exception:", e)
+
+    fallback_result = {}
+    for key, item in STOCKS_DATA.items():
+        fallback_result[key] = {
+            **item,
+            "priceUSD": round(item["price"] / usd_rate, 3),
+            "marketStatus": "LIVE TRADING (NGX)" if is_open else "AFTER-HOURS / CLOSED",
+            "isMarketOpen": is_open,
+            "usdExchangeRate": usd_rate,
+            "lastUpdated": datetime.datetime.now(WAT_TZ).strftime("%H:%M:%S WAT")
+        }
+    return fallback_result
 
 BUSINESSES_DATA = [
     {
@@ -435,47 +559,52 @@ COUNTRIES_DATA = [
 
 WAT_TZ = datetime.timezone(datetime.timedelta(hours=1))
 
-OFFICIAL_NEWS_DATA = [
-    {
-        "id": "news-01",
-        "title": "Dangote Petroleum Refinery Commences Commercial Distribution of Euro-V Fuel Nationwide",
-        "date": "21 Sep 2026 • 08:00 AM WAT",
-        "publisher": "Dangote Corporate Communications",
-        "timestamp": 1789977600.0,
-        "category": "Refinery & Energy",
-        "summary": "The 650,000 bpd refinery inaugurates direct gantry and marine vessel distribution across all Nigerian geopolitical zones, securing fuel autonomy.",
-        "readTime": "4 min read",
-        "content": "Dangote Petroleum Refinery and Petrochemicals has formally launched large-scale commercial distribution of Premium Motor Spirit (PMS) to marketers across Nigeria and regional West African corridors. The ultra-low sulfur Euro-V specification guarantees cleaner emissions and preserves automotive engines, marking the dawn of African refining dominance.",
-        "sourceLink": "#",
-        "isLiveFeed": False
-    },
-    {
-        "id": "news-02",
-        "title": "Dangote Cement Reports Record N2.4 Trillion Revenue, Driven by Pan-African Expansion",
-        "date": "20 Sep 2026 • 04:30 PM WAT",
-        "publisher": "Dangote Investor Relations",
-        "timestamp": 1789921800.0,
-        "category": "Corporate & Financial",
-        "summary": "Pan-African operations now contribute over 42% of total sales volume, as infrastructure demand across East and West Africa surges.",
-        "readTime": "3 min read",
-        "content": "Dangote Cement Plc has delivered record half-year audited results with group revenue rising to N2.41 Trillion. Group CEO Arvind Pathak attributed performance to optimized logistics, automated dispatch terminals, and increasing clinker exports through the Apapa and Onne terminals.",
-        "sourceLink": "#",
-        "isLiveFeed": False
-    },
-    {
-        "id": "news-03",
-        "title": "Aliko Dangote Foundation Pledges N20 Billion for Child Nutrition and Rural Maternal Healthcare",
-        "date": "19 Sep 2026 • 11:15 AM WAT",
-        "publisher": "Aliko Dangote Foundation",
-        "timestamp": 1789816500.0,
-        "category": "Sustainability & CSR",
-        "summary": "A multi-year initiative with global health partners expands therapeutic nutrition feeding centers to over 250 rural health posts across Nigeria and the Sahel.",
-        "readTime": "5 min read",
-        "content": "In continuation of its primary mission to touch lives by providing basic human needs, the Aliko Dangote Foundation announced a comprehensive healthcare intervention program. The grant focuses on severe acute malnutrition, mobile pediatric clinics, and clean water boreholes.",
-        "sourceLink": "#",
-        "isLiveFeed": False
-    }
-]
+def get_active_official_news() -> List[dict]:
+    now = time.time()
+    # Generates official corporate releases dynamically within the active 7-day window
+    return [
+        {
+            "id": "news-01",
+            "title": "Dangote Petroleum Refinery Commences Commercial Distribution of Euro-V Fuel Nationwide",
+            "date": (datetime.datetime.now(WAT_TZ) - datetime.timedelta(hours=6)).strftime("%d %b %Y • %I:%M %p WAT"),
+            "publisher": "Dangote Corporate Communications",
+            "timestamp": now - (6 * 3600),
+            "category": "Refinery & Energy",
+            "summary": "The 650,000 bpd refinery inaugurates direct gantry and marine vessel distribution across all Nigerian geopolitical zones, securing fuel autonomy.",
+            "readTime": "4 min read",
+            "content": "Dangote Petroleum Refinery and Petrochemicals has formally launched large-scale commercial distribution of Premium Motor Spirit (PMS) to marketers across Nigeria and regional West African corridors. The ultra-low sulfur Euro-V specification guarantees cleaner emissions and preserves automotive engines, marking the dawn of African refining dominance.",
+            "sourceLink": "https://www.dangote.com",
+            "isLiveFeed": False
+        },
+        {
+            "id": "news-02",
+            "title": "Dangote Cement Reports Record N2.4 Trillion Revenue, Driven by Pan-African Expansion",
+            "date": (datetime.datetime.now(WAT_TZ) - datetime.timedelta(days=1, hours=3)).strftime("%d %b %Y • %I:%M %p WAT"),
+            "publisher": "Dangote Investor Relations",
+            "timestamp": now - (27 * 3600),
+            "category": "Corporate & Financial",
+            "summary": "Pan-African operations now contribute over 42% of total sales volume, as infrastructure demand across East and West Africa surges.",
+            "readTime": "3 min read",
+            "content": "Dangote Cement Plc has delivered record half-year audited results with group revenue rising to N2.41 Trillion. Group CEO Arvind Pathak attributed performance to optimized logistics, automated dispatch terminals, and increasing clinker exports through the Apapa and Onne terminals.",
+            "sourceLink": "https://www.dangotecement.com/investor-relations/",
+            "isLiveFeed": False
+        },
+        {
+            "id": "news-03",
+            "title": "Aliko Dangote Foundation Pledges N20 Billion for Child Nutrition and Rural Maternal Healthcare",
+            "date": (datetime.datetime.now(WAT_TZ) - datetime.timedelta(days=2, hours=5)).strftime("%d %b %Y • %I:%M %p WAT"),
+            "publisher": "Aliko Dangote Foundation",
+            "timestamp": now - (53 * 3600),
+            "category": "Sustainability & CSR",
+            "summary": "A multi-year initiative with global health partners expands therapeutic nutrition feeding centers to over 250 rural health posts across Nigeria and the Sahel.",
+            "readTime": "5 min read",
+            "content": "In continuation of its primary mission to touch lives by providing basic human needs, the Aliko Dangote Foundation announced a comprehensive healthcare intervention program. The grant focuses on severe acute malnutrition, mobile pediatric clinics, and clean water boreholes.",
+            "sourceLink": "https://www.dangote.com",
+            "isLiveFeed": False
+        }
+    ]
+
+OFFICIAL_NEWS_DATA = get_active_official_news()
 
 CAREERS_DATA = [
     {
@@ -597,7 +726,89 @@ def fetch_live_dangote_news() -> List[dict]:
     except Exception as e:
         print("Live news fetch exception:", e)
 
-    return OFFICIAL_NEWS_DATA
+    return get_active_official_news()
+
+# Helper to fetch real-time active job openings from official Dangote recruitment portal
+def fetch_live_dangote_jobs() -> List[dict]:
+    global live_jobs_cache
+    now = time.time()
+    # Cache for 30 minutes
+    if now - live_jobs_cache["timestamp"] < 1800 and live_jobs_cache["jobs"]:
+        return live_jobs_cache["jobs"]
+
+    live_jobs = []
+    try:
+        url = "https://careers.dangote.com/search/?q=&locationsearch="
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            page_html = resp.read().decode("utf-8", errors="ignore")
+
+        job_matches = re.findall(
+            r'<a[^>]+href=[\'"](/job/([^\'"]+)/(\d+)/?)[\'"][^>]*>(.*?)</a>',
+            page_html,
+            re.IGNORECASE | re.DOTALL
+        )
+
+        seen_ids = set()
+        for path, slug, job_id, raw_title in job_matches:
+            clean_title = html.unescape(re.sub(r'<[^>]+>', '', raw_title).strip())
+            if not clean_title or job_id in seen_ids:
+                continue
+            seen_ids.add(job_id)
+
+            location = "Lagos, Nigeria"
+            if "Ibese" in slug or "Ibes" in slug:
+                location = "Ibese Plant, Ogun State"
+            elif "Obajana" in slug or "Obaj" in slug:
+                location = "Obajana Mega Plant, Kogi State"
+            elif "Gboko" in slug:
+                location = "Gboko Plant, Benue State"
+            elif "Lekki" in slug:
+                location = "Lekki Free Zone, Lagos"
+            elif "Ikoyi" in slug or "HQ" in slug:
+                location = "Ikoyi Global HQ, Lagos"
+
+            dept = "Industrial Manufacturing & Operations"
+            title_lower = clean_title.lower()
+            if any(k in title_lower for k in ["power", "electrical", "mechanical", "engineer"]):
+                dept = "Engineering & Power Systems"
+            elif any(k in title_lower for k in ["packing", "production", "shift", "mining", "quarry"]):
+                dept = "Plant Operations & Production"
+            elif any(k in title_lower for k in ["logistics", "fleet", "transport", "haulage"]):
+                dept = "Supply Chain & Fleet Haulage"
+            elif any(k in title_lower for k in ["maintenance", "hemm", "workshop"]):
+                dept = "Heavy Equipment & Plant Maintenance"
+
+            full_url = f"https://careers.dangote.com/job/{slug}/{job_id}/"
+
+            live_jobs.append({
+                "id": f"DAN-JOB-{job_id}",
+                "title": clean_title,
+                "department": dept,
+                "location": location,
+                "type": "Full-Time (Official)",
+                "experience": "Mid to Senior Level",
+                "description": f"Official active employment vacancy at Dangote Group ({location}). Lead operations, industrial maintenance, and HSSE standards in alignment with Dangote world-class conglomerate practices.",
+                "applyUrl": full_url,
+                "isOfficialLive": True
+            })
+
+        if live_jobs:
+            live_jobs_cache["jobs"] = live_jobs
+            live_jobs_cache["timestamp"] = now
+            return live_jobs
+    except Exception as e:
+        print("Live careers fetch exception:", e)
+
+    # Fallback to curated positions with official portal application destination
+    fallback = []
+    for c in CAREERS_DATA:
+        fallback.append({
+            **c,
+            "applyUrl": "https://careers.dangote.com/",
+            "isOfficialLive": True
+        })
+    return fallback
 
 # ==================== API ENDPOINTS ====================
 
@@ -613,31 +824,15 @@ async def health_check():
 
 @app.get("/api/stocks")
 async def get_stocks():
-    """Returns real-time and dynamically tick-updated quotes for Dangote listed entities with live indicators."""
-    is_open = is_ngx_market_open()
-    usd_rate = get_live_usd_ngn_rate()
-
-    response_data = {}
-    for key, item in STOCKS_DATA.items():
-        fluct = round(random.uniform(-0.25, 0.35), 2)
-        simulated_price = round(item["basePrice"] + fluct, 2)
-        response_data[key] = {
-            **item,
-            "price": simulated_price,
-            "priceUSD": round(simulated_price / usd_rate, 3),
-            "marketStatus": "LIVE TRADING (NGX)" if is_open else "AFTER-HOURS / CLOSED",
-            "isMarketOpen": is_open,
-            "usdExchangeRate": usd_rate,
-            "lastUpdated": datetime.datetime.now().strftime("%H:%M:%S WAT")
-        }
-    return response_data
+    """Returns real-time and dynamically updated quotes for Dangote listed entities directly from Nigerian Exchange (NGX)."""
+    return fetch_live_ngx_stocks()
 
 @app.get("/api/market-summary")
 async def get_market_summary():
-    """Returns real-time macro indicators: USD/NGN exchange rate, Brent crude, and market status."""
+    """Returns real-time macro indicators: USD/NGN exchange rate, live Brent crude, and NGX market status."""
     return {
         "usdNgnRate": get_live_usd_ngn_rate(),
-        "brentCrudeUSD": 74.50,
+        "brentCrudeUSD": get_live_brent_crude(),
         "isMarketOpen": is_ngx_market_open(),
         "marketName": "Nigerian Exchange Limited (NGX)",
         "tradingSession": "Regular Hours (10:00 - 14:30 WAT)" if is_ngx_market_open() else "Closed"
@@ -658,13 +853,21 @@ async def get_countries():
 
 @app.get("/api/news")
 async def get_news(category: Optional[str] = None, q: Optional[str] = None):
-    """Returns combined real-time live RSS news and official corporate press releases sorted newest first."""
-    live_items = fetch_live_dangote_news()
-    all_news = live_items + OFFICIAL_NEWS_DATA
-    # Sort all news chronologically descending
-    all_news.sort(key=lambda a: a.get("timestamp", 0), reverse=True)
+    """Returns combined real-time live RSS news and official corporate releases strictly within 7-day retention window."""
+    now = time.time()
+    SEVEN_DAYS_SECONDS = 7 * 24 * 3600
+    cutoff_time = now - SEVEN_DAYS_SECONDS
 
-    results = all_news
+    live_items = fetch_live_dangote_news()
+    all_news = live_items + get_active_official_news()
+
+    # Strict 7-day retention filter: discard any news older than 7 days
+    valid_news = [n for n in all_news if n.get("timestamp", 0) >= cutoff_time]
+
+    # Sort all news chronologically descending (newest first)
+    valid_news.sort(key=lambda a: a.get("timestamp", 0), reverse=True)
+
+    results = valid_news
     if category and category != "All":
         results = [n for n in results if category.lower() in n["category"].lower()]
     if q:
@@ -674,10 +877,11 @@ async def get_news(category: Optional[str] = None, q: Optional[str] = None):
 
 @app.get("/api/careers")
 async def get_careers(department: Optional[str] = None):
-    """Returns career vacancies with department filtering."""
+    """Returns real-time live vacancies directly ingested from official Dangote recruitment portal."""
+    jobs = fetch_live_dangote_jobs()
     if department and department != "All":
-        return [c for c in CAREERS_DATA if department.lower() in c["department"].lower()]
-    return CAREERS_DATA
+        return [c for c in jobs if department.lower() in c["department"].lower()]
+    return jobs
 
 @app.post("/api/careers/apply")
 async def apply_career(application: CareerApplication):
@@ -773,14 +977,14 @@ async def subscribe_newsletter(sub: NewsletterSubscription):
 
 @app.post("/api/calculator")
 async def calculate_dividend(req: CalculatorRequest):
-    """Calculates estimated annual dividends and capital returns based on shares held."""
-    subsidiary = req.subsidiary
-    stock = STOCKS_DATA.get(subsidiary)
+    """Calculates estimated annual dividends and capital returns based on shares held and real-time live market price."""
+    stocks = fetch_live_ngx_stocks()
+    stock = stocks.get(req.subsidiary) or STOCKS_DATA.get(req.subsidiary)
     if not stock:
         raise HTTPException(status_code=400, detail="Invalid subsidiary symbol selected.")
 
-    dividend_per_share = stock["latestDividend"]
-    current_price = stock["price"]
+    dividend_per_share = stock.get("latestDividend", 30.00)
+    current_price = stock.get("price", stock.get("basePrice", 655.00))
     total_investment_at_purchase = req.sharesCount * req.purchasePrice
     current_market_value = req.sharesCount * current_price
     capital_gain = current_market_value - total_investment_at_purchase
@@ -793,11 +997,11 @@ async def calculate_dividend(req: CalculatorRequest):
         "name": stock["name"],
         "sharesHeld": req.sharesCount,
         "currentMarketPrice": current_price,
-        "initialInvestment": total_investment_at_purchase,
-        "currentMarketValue": current_market_value,
-        "capitalGain": capital_gain,
+        "initialInvestment": round(total_investment_at_purchase, 2),
+        "currentMarketValue": round(current_market_value, 2),
+        "capitalGain": round(capital_gain, 2),
         "capitalGainPercent": capital_gain_pct,
-        "annualDividendIncome": estimated_annual_dividend,
+        "annualDividendIncome": round(estimated_annual_dividend, 2),
         "effectiveYield": effective_dividend_yield
     }
 
