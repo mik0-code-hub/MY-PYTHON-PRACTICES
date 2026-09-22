@@ -190,54 +190,57 @@ STOCKS_DATA = {
         "name": "Dangote Cement Plc",
         "exchange": "NGX (Nigerian Exchange)",
         "currency": "NGN",
-        "price": 655.00,
-        "basePrice": 655.00,
-        "change": +14.50,
-        "changePercent": +2.26,
-        "volume": "14,892,300",
-        "marketCap": "11.16 Trillion NGN",
-        "peRatio": 14.8,
-        "dividendYield": "4.58%",
-        "latestDividend": 30.00,
-        "52WeekHigh": 763.00,
-        "52WeekLow": 285.00,
-        "sparkline": [630, 635, 638, 642, 640, 646, 650, 648, 652, 655]
+        "price": 1050.00,
+        "basePrice": 1050.00,
+        "change": 0.00,
+        "changePercent": 0.00,
+        "volume": "2,464,944",
+        "marketCap": "17.41 Trillion NGN",
+        "rawMarketCap": 17414465332031,
+        "peRatio": 15.6,
+        "dividendYield": "4.29%",
+        "latestDividend": 45.00,
+        "52WeekHigh": 1050.00,
+        "52WeekLow": 650.00,
+        "sparkline": [980, 990, 1010, 1025, 1030, 1035, 1040, 1045, 1050]
     },
     "DANGSUGAR": {
         "symbol": "DANGSUGAR",
         "name": "Dangote Sugar Refinery Plc",
         "exchange": "NGX (Nigerian Exchange)",
         "currency": "NGN",
-        "price": 63.80,
-        "basePrice": 63.80,
-        "change": +1.10,
-        "changePercent": +1.75,
-        "volume": "8,430,200",
-        "marketCap": "774.8 Billion NGN",
-        "peRatio": 11.2,
-        "dividendYield": "3.92%",
+        "price": 71.50,
+        "basePrice": 71.50,
+        "change": -0.05,
+        "changePercent": -0.07,
+        "volume": "5,203,411",
+        "marketCap": "1.45 Trillion NGN",
+        "rawMarketCap": 1447503116211,
+        "peRatio": 352.0,
+        "dividendYield": "3.50%",
         "latestDividend": 2.50,
-        "52WeekHigh": 72.00,
-        "52WeekLow": 31.50,
-        "sparkline": [61, 62, 61.5, 62.8, 63.0, 62.5, 63.2, 63.5, 63.8]
+        "52WeekHigh": 95.80,
+        "52WeekLow": 53.55,
+        "sparkline": [68, 69, 70, 70.5, 71, 70.8, 71.2, 71.5]
     },
     "NASCON": {
         "symbol": "NASCON",
         "name": "NASCON Allied Industries Plc",
         "exchange": "NGX (Nigerian Exchange)",
         "currency": "NGN",
-        "price": 49.50,
-        "basePrice": 49.50,
-        "change": +1.40,
-        "changePercent": +2.91,
-        "volume": "4,120,500",
-        "marketCap": "131.2 Billion NGN",
-        "peRatio": 9.8,
-        "dividendYield": "4.04%",
-        "latestDividend": 2.00,
-        "52WeekHigh": 58.00,
-        "52WeekLow": 24.00,
-        "sparkline": [46.5, 47, 46.8, 47.5, 48.0, 48.2, 49.0, 49.5]
+        "price": 176.00,
+        "basePrice": 176.00,
+        "change": +16.00,
+        "changePercent": +10.00,
+        "volume": "3,164,288",
+        "marketCap": "475.6 Billion NGN",
+        "rawMarketCap": 475627195312,
+        "peRatio": 12.7,
+        "dividendYield": "2.84%",
+        "latestDividend": 5.00,
+        "52WeekHigh": 222.00,
+        "52WeekLow": 94.05,
+        "sparkline": [155, 158, 162, 165, 168, 172, 175, 176]
     }
 }
 
@@ -315,6 +318,7 @@ def fetch_live_ngx_stocks() -> dict:
             result_data[sym_key] = {
                 **STOCKS_DATA[sym_key],
                 "price": live_price,
+                "rawMarketCap": raw_mcap,
                 "priceUSD": round(live_price / usd_rate, 3),
                 "marketStatus": "LIVE TRADING (NGX)" if is_open else "AFTER-HOURS / CLOSED",
                 "isMarketOpen": is_open,
@@ -1062,8 +1066,8 @@ async def calculate_dividend(req: CalculatorRequest):
     if not stock:
         raise HTTPException(status_code=400, detail="Invalid subsidiary symbol selected.")
 
-    dividend_per_share = stock.get("latestDividend", 30.00)
-    current_price = stock.get("price", stock.get("basePrice", 655.00))
+    dividend_per_share = stock.get("latestDividend", 45.00)
+    current_price = stock.get("price", stock.get("basePrice", 1050.00))
     total_investment_at_purchase = req.sharesCount * req.purchasePrice
     current_market_value = req.sharesCount * current_price
     capital_gain = current_market_value - total_investment_at_purchase

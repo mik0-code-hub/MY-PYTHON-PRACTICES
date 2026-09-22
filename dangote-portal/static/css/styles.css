@@ -364,6 +364,13 @@ ul {
   gap: 2px;
 }
 
+.stock-neutral {
+  color: #94A3B8;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
 .ticker-right {
   display: flex;
   align-items: center;

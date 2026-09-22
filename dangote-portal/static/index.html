@@ -30,21 +30,21 @@
             <span class="pulse-dot"></span> LIVE NGX
           </div>
           <div class="ticker-items-track" id="stockTickerTrack">
-            <!-- Dynamically populated by ticker.js -->
+            <!-- Dynamically populated and refreshed by ticker.js -->
             <div class="stock-quote-item">
               <span class="stock-symbol">DANGCEM</span>
-              <span class="stock-val">₦655.00</span>
-              <span class="stock-up">▲ +14.50 (+2.26%)</span>
+              <span class="stock-val">₦1,050.00</span>
+              <span class="stock-neutral">● 0.00 (0.00%)</span>
             </div>
             <div class="stock-quote-item">
               <span class="stock-symbol">DANGSUGAR</span>
-              <span class="stock-val">₦63.80</span>
-              <span class="stock-up">▲ +1.10 (+1.75%)</span>
+              <span class="stock-val">₦71.50</span>
+              <span class="stock-down">▼ -0.05 (-0.07%)</span>
             </div>
             <div class="stock-quote-item">
               <span class="stock-symbol">NASCON</span>
-              <span class="stock-val">₦49.50</span>
-              <span class="stock-up">▲ +1.40 (+2.91%)</span>
+              <span class="stock-val">₦176.00</span>
+              <span class="stock-up">▲ +16.00 (+10.00%)</span>
             </div>
           </div>
         </div>
@@ -455,11 +455,11 @@
               <div class="investor-card-label">Cement Audited Group Revenue</div>
             </div>
             <div class="investor-card">
-              <div class="investor-card-val">₦30.00</div>
-              <div class="investor-card-label">Dangote Cement Annual Dividend/Share</div>
+              <div class="investor-card-val" id="invCementDividend">₦45.00</div>
+              <div class="investor-card-label">Dangote Cement Latest Dividend/Share</div>
             </div>
             <div class="investor-card">
-              <div class="investor-card-val">11.16T</div>
+              <div class="investor-card-val" id="invCombinedMarketCap">₦19.34T</div>
               <div class="investor-card-label">NGN Combined Market Cap (NGX)</div>
             </div>
             <div class="investor-card">
@@ -573,9 +573,9 @@
           <div class="calc-form-group">
             <label class="calc-label" for="calcSubsidiary">Select Listed Entity</label>
             <select class="calc-select" id="calcSubsidiary">
-              <option value="DANGCEM">Dangote Cement Plc (DANGCEM - NGN 655.00)</option>
-              <option value="DANGSUGAR">Dangote Sugar Refinery Plc (DANGSUGAR - NGN 63.80)</option>
-              <option value="NASCON">NASCON Allied Industries Plc (NASCON - NGN 49.50)</option>
+              <option value="DANGCEM">Dangote Cement Plc (DANGCEM - NGN 1,050.00)</option>
+              <option value="DANGSUGAR">Dangote Sugar Refinery Plc (DANGSUGAR - NGN 71.50)</option>
+              <option value="NASCON">NASCON Allied Industries Plc (NASCON - NGN 176.00)</option>
             </select>
           </div>
 
@@ -594,14 +594,14 @@
 
           <div class="calc-form-group">
             <label class="calc-label" for="calcPurchasePrice">Your Average Purchase Price (₦ per share)</label>
-            <input type="number" class="calc-input" id="calcPurchasePrice" value="550.00" step="1.0" />
+            <input type="number" class="calc-input" id="calcPurchasePrice" value="950.00" step="1.0" />
           </div>
 
           <!-- Calculated Results Panel -->
           <div class="calc-results-panel">
             <div class="calc-result-row">
               <span>Current Portfolio Market Value:</span>
-              <strong id="calcCurrentMarketVal" style="color: var(--dangote-navy);">₦3,275,000.00</strong>
+              <strong id="calcCurrentMarketVal" style="color: var(--dangote-navy);">₦5,250,000.00</strong>
             </div>
             <div class="calc-result-row">
               <span>Unrealized Capital Gain:</span>
@@ -760,7 +760,7 @@
             <div class="form-row-2">
               <div class="form-group">
                 <label class="form-label" for="contactFullName">Full Name *</label>
-                <input type="text" class="form-input" id="contactFullName" required placeholder="e.g. Dr. Babatunde Alabi" />
+                <input type="text" class="form-input" id="contactFullName" required placeholder="e.g. Michael Ofodile" />
               </div>
               <div class="form-group">
                 <label class="form-label" for="contactEmail">Official Email *</label>
