@@ -41,6 +41,17 @@ const API = {
     }
   },
 
+  async getGovernance() {
+    try {
+      const res = await fetch(`${this.baseUrl}/api/governance`);
+      if (!res.ok) throw new Error("Governance fetch error");
+      return await res.json();
+    } catch (e) {
+      console.warn("Governance fetch failed", e);
+      return [];
+    }
+  },
+
   async getNews(category = null, q = null) {
     try {
       let url = `${this.baseUrl}/api/news?`;

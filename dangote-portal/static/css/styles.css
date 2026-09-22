@@ -86,6 +86,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--header-height) + var(--ticker-height) + 16px);
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   width: 100%;
@@ -102,6 +103,7 @@ body {
   max-width: 100%;
   overflow-x: hidden;
   position: relative;
+  padding-top: calc(var(--header-height) + var(--ticker-height));
   transition: background-color var(--transition-smooth), color var(--transition-smooth);
 }
 
@@ -264,9 +266,19 @@ ul {
   font-size: 0.82rem;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  position: relative;
-  z-index: 1001;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1020;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: box-shadow var(--transition-fast);
+}
+
+.top-ticker-bar.scrolled {
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.35);
 }
 
 .ticker-wrapper {
@@ -321,6 +333,7 @@ ul {
   overflow-x: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .ticker-items-track::-webkit-scrollbar {
@@ -412,9 +425,12 @@ ul {
    ========================================================================== */
 
 .main-header {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
+  position: fixed;
+  top: var(--ticker-height);
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1010;
   background: var(--surface-glass);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -1217,6 +1233,16 @@ ul {
 }
 
 @media (max-width: 768px) {
+  .top-ticker-bar {
+    font-size: 0.78rem;
+  }
+  .ticker-items-track {
+    gap: 16px;
+  }
+  .stock-quote-item {
+    padding: 0 4px;
+    gap: 6px;
+  }
   .ticker-right .utility-link {
     display: none;
   }
@@ -1318,6 +1344,17 @@ ul {
 }
 
 @media (max-width: 480px) {
+  .top-ticker-bar {
+    font-size: 0.74rem;
+  }
+  .ticker-left {
+    gap: 8px;
+  }
+  .ticker-live-tag {
+    font-size: 0.62rem;
+    padding: 2px 5px;
+    letter-spacing: 0.2px;
+  }
   .container {
     padding-left: 16px;
     padding-right: 16px;

@@ -1149,6 +1149,140 @@
   padding: 28px;
 }
 
+/* ==========================================================================
+   CORPORATE GOVERNANCE ACCORDION COMPONENT
+   ========================================================================== */
+
+.governance-accordion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 55vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.governance-accordion-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.governance-accordion-list::-webkit-scrollbar-thumb {
+  background: var(--surface-border);
+  border-radius: 4px;
+}
+
+.gov-policy-card {
+  border: 1px solid var(--surface-border);
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  overflow: hidden;
+  transition: all var(--transition-fast);
+}
+
+.gov-policy-card:hover {
+  border-color: var(--dangote-navy-light);
+}
+
+.gov-policy-header {
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  background: transparent;
+  gap: 12px;
+  transition: background var(--transition-fast);
+}
+
+.gov-policy-header:hover {
+  background: rgba(0, 34, 93, 0.04);
+}
+
+[data-theme="dark"] .gov-policy-header:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.gov-policy-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.gov-policy-num {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--dangote-navy);
+  background: rgba(0, 34, 93, 0.08);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .gov-policy-num {
+  color: #93C5FD;
+  background: rgba(147, 197, 253, 0.15);
+}
+
+.gov-policy-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.gov-policy-icon {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  transition: transform var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.gov-policy-card.active .gov-policy-icon {
+  transform: rotate(180deg);
+}
+
+.gov-policy-body {
+  display: none;
+  padding: 16px 20px 20px 20px;
+  border-top: 1px solid var(--surface-border-subtle);
+  background: var(--surface-card);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.gov-policy-card.active .gov-policy-body {
+  display: block;
+}
+
+.gov-policy-download-btn {
+  margin-top: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.gov-policy-download-btn:hover {
+  background: #059669;
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .gov-policy-download-btn {
+  color: #10B981;
+}
+
 .modal-specs-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

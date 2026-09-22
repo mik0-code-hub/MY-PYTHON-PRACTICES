@@ -20,6 +20,7 @@ const App = {
     this.initSearchModal();
     this.initContactForm();
     this.initEthicsModal();
+    this.initGovernanceModal();
     this.initBranchTabs();
 
     // Initialize Submodules
@@ -31,6 +32,7 @@ const App = {
     await this.loadBusinesses();
     await this.loadNews();
     await this.loadCareers();
+    this.loadGovernancePolicies();
 
     // Start background live news synchronization
     this.setupNewsAutoRefresh();
@@ -61,16 +63,32 @@ const App = {
     }
   },
 
-  /* ==================== HEADER SCROLL ==================== */
+  /* ==================== HEADER & TICKER SCROLL ==================== */
   initHeaderScroll() {
     const header = document.getElementById('mainHeader');
+    const ticker = document.getElementById('topTickerBar');
+
+    const updateHeaderOffset = () => {
+      if (ticker) {
+        const tickerH = ticker.offsetHeight;
+        if (tickerH > 0) {
+          document.documentElement.style.setProperty('--ticker-height', `${tickerH}px`);
+        }
+      }
+    };
+
+    updateHeaderOffset();
+    window.addEventListener('resize', updateHeaderOffset, { passive: true });
+
     window.addEventListener('scroll', () => {
-      if (window.scrollY > 40) {
+      if (window.scrollY > 30) {
         header?.classList.add('scrolled');
+        ticker?.classList.add('scrolled');
       } else {
         header?.classList.remove('scrolled');
+        ticker?.classList.remove('scrolled');
       }
-    });
+    }, { passive: true });
   },
 
   /* ==================== CINEMATIC HERO SLIDER ==================== */
@@ -544,6 +562,114 @@ const App = {
     }
   },
 
+  /* ==================== CORPORATE GOVERNANCE MODAL ==================== */
+  initGovernanceModal() {
+    const modal = document.getElementById('governanceModal');
+    const searchInput = document.getElementById('governanceSearchInput');
+    const expandBtn = document.getElementById('govExpandAllBtn');
+    const collapseBtn = document.getElementById('govCollapseAllBtn');
+
+    if (modal) {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeGovernanceModal();
+      });
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        this.renderGovernancePolicies(e.target.value);
+      });
+    }
+
+    if (expandBtn) {
+      expandBtn.addEventListener('click', () => {
+        document.querySelectorAll('.gov-policy-card').forEach(c => c.classList.add('active'));
+      });
+    }
+
+    if (collapseBtn) {
+      collapseBtn.addEventListener('click', () => {
+        document.querySelectorAll('.gov-policy-card').forEach(c => c.classList.remove('active'));
+      });
+    }
+  },
+
+  async loadGovernancePolicies() {
+    if (this.governancePolicies && this.governancePolicies.length > 0) return;
+    try {
+      if (window.API && window.API.getGovernance) {
+        this.governancePolicies = await window.API.getGovernance();
+      }
+      if (!this.governancePolicies || this.governancePolicies.length === 0) {
+        const res = await fetch('/data/governance_policies.json');
+        if (res.ok) {
+          this.governancePolicies = await res.json();
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load governance policies', e);
+    }
+  },
+
+  renderGovernancePolicies(filterQuery = '') {
+    const container = document.getElementById('governancePoliciesList');
+    if (!container || !this.governancePolicies) return;
+
+    const q = (filterQuery || '').trim().toLowerCase();
+    const filtered = q
+      ? this.governancePolicies.filter(p => 
+          p.title.toLowerCase().includes(q) || 
+          p.summary.toLowerCase().includes(q)
+        )
+      : this.governancePolicies;
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 32px 16px; color: var(--text-muted);">
+          <span style="font-size: 1.8rem; display: block; margin-bottom: 8px;">📑</span>
+          <strong>No matching policies found for "${filterQuery}"</strong>
+          <p style="font-size: 0.85rem; margin-top: 4px;">Try searching for "Bribery", "Board", "Trading", or "Safety".</p>
+        </div>
+      `;
+      return;
+    }
+
+    let html = '';
+    filtered.forEach(p => {
+      const pdfBtn = p.pdfUrl
+        ? `<div style="margin-top: 14px;">
+             <a href="${p.pdfUrl}" target="_blank" rel="noopener noreferrer" class="gov-policy-download-btn">
+               <span>📄 Download Official Policy PDF (Dangote Verified)</span>
+               <span>↗</span>
+             </a>
+           </div>`
+        : '';
+
+      const pdfBadge = p.pdfUrl
+        ? `<span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.25); font-size: 0.68rem; padding: 2px 7px;">PDF INCLUDED</span>`
+        : '';
+
+      html += `
+        <div class="gov-policy-card" id="${p.id}">
+          <div class="gov-policy-header" onclick="togglePolicyCard('${p.id}')">
+            <div class="gov-policy-title-wrap">
+              <span class="gov-policy-num">#${p.number}</span>
+              <h4 class="gov-policy-title">${p.title}</h4>
+              ${pdfBadge}
+            </div>
+            <span class="gov-policy-icon">▼</span>
+          </div>
+          <div class="gov-policy-body">
+            <p style="margin: 0; line-height: 1.7;">${p.summary}</p>
+            ${pdfBtn}
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  },
+
   /* ==================== BRANCH DIRECTORY TABS ==================== */
   initBranchTabs() {
     const tabs = document.querySelectorAll('.branch-tab-btn');
@@ -847,3 +973,30 @@ window.openStockModal = openStockModal;
 window.openApplyModal = openApplyModal;
 window.closeApplyModal = closeApplyModal;
 window.closeDetailModal = closeDetailModal;
+window.openGovernanceModal = openGovernanceModal;
+window.closeGovernanceModal = closeGovernanceModal;
+window.togglePolicyCard = togglePolicyCard;
+
+function openGovernanceModal() {
+  const modal = document.getElementById('governanceModal');
+  if (!modal) return;
+  modal.classList.add('active');
+  if (App.governancePolicies && App.governancePolicies.length > 0) {
+    App.renderGovernancePolicies();
+  } else {
+    App.loadGovernancePolicies().then(() => {
+      App.renderGovernancePolicies();
+    });
+  }
+}
+
+function closeGovernanceModal() {
+  document.getElementById('governanceModal')?.classList.remove('active');
+}
+
+function togglePolicyCard(cardId) {
+  const card = document.getElementById(cardId);
+  if (card) {
+    card.classList.toggle('active');
+  }
+}

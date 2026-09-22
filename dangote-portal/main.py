@@ -852,6 +852,15 @@ async def get_businesses(category: Optional[str] = None):
         return filtered
     return BUSINESSES_DATA
 
+@app.get("/api/governance")
+async def get_governance_policies():
+    """Returns the official 24 Corporate Governance & Board Policies dataset."""
+    policies_path = os.path.join(os.path.dirname(__file__), "static", "data", "governance_policies.json")
+    if os.path.exists(policies_path):
+        with open(policies_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return []
+
 @app.get("/api/countries")
 async def get_countries():
     """Returns the Pan-African presence dataset for interactive map visualizer."""
