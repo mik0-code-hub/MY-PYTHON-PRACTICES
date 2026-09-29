@@ -16,8 +16,8 @@
   <meta property="og:type" content="website" />
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="/css/styles.css" />
-  <link rel="stylesheet" href="/css/components.css" />
+  <link rel="stylesheet" href="/css/styles.css?v=2.2.0" />
+  <link rel="stylesheet" href="/css/components.css?v=2.2.0" />
 </head>
 <body>
 
@@ -26,25 +26,22 @@
     <div class="container">
       <div class="ticker-wrapper">
         <div class="ticker-left">
-          <div class="ticker-live-tag">
-            <span class="pulse-dot"></span> LIVE NGX
+          <div class="ticker-live-tag tag-open" id="tickerLiveTag">
+            <span class="pulse-dot"></span> LIVE NGX (15m Delay)
           </div>
           <div class="ticker-items-track" id="stockTickerTrack">
-            <!-- Dynamically populated and refreshed by ticker.js -->
+            <!-- Dynamically populated and refreshed by ticker.js from official NGX feed -->
             <div class="stock-quote-item">
               <span class="stock-symbol">DANGCEM</span>
-              <span class="stock-val">₦1,050.00</span>
-              <span class="stock-neutral">● 0.00 (0.00%)</span>
+              <span class="stock-val" style="opacity: 0.7;">Syncing NGX...</span>
             </div>
             <div class="stock-quote-item">
               <span class="stock-symbol">DANGSUGAR</span>
-              <span class="stock-val">₦71.50</span>
-              <span class="stock-down">▼ -0.05 (-0.07%)</span>
+              <span class="stock-val" style="opacity: 0.7;">Syncing NGX...</span>
             </div>
             <div class="stock-quote-item">
               <span class="stock-symbol">NASCON</span>
-              <span class="stock-val">₦176.00</span>
-              <span class="stock-up">▲ +16.00 (+10.00%)</span>
+              <span class="stock-val" style="opacity: 0.7;">Syncing NGX...</span>
             </div>
           </div>
         </div>
@@ -1369,10 +1366,10 @@
   <div class="toast-container" id="toastContainer"></div>
 
   <!-- Scripts -->
-  <script src="/js/api.js"></script>
-  <script src="/js/ticker.js"></script>
-  <script src="/js/map.js"></script>
-  <script src="/js/calculator.js"></script>
-  <script src="/js/app.js"></script>
+  <script src="/js/api.js?v=2.2.0"></script>
+  <script src="/js/ticker.js?v=2.2.0"></script>
+  <script src="/js/map.js?v=2.2.0"></script>
+  <script src="/js/calculator.js?v=2.2.0"></script>
+  <script src="/js/app.js?v=2.2.0"></script>
 </body>
 </html>

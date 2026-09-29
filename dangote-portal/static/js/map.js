@@ -11,7 +11,7 @@ const AfricaMap = {
     this.renderMarkers();
     this.renderPills();
     if (this.countries.length > 0) {
-      this.selectCountry(this.countries[0].country);
+      this.selectCountry(this.countries[0].country, false);
     }
   },
 
@@ -22,7 +22,7 @@ const AfricaMap = {
     let markersHtml = '';
     this.countries.forEach(c => {
       markersHtml += `
-        <div class="map-marker" id="marker-${c.country}" style="left: ${c.coords.x}%; top: ${c.coords.y}%;" onclick="AfricaMap.selectCountry('${c.country}')">
+        <div class="map-marker" id="marker-${c.country}" style="left: ${c.coords.x}%; top: ${c.coords.y}%;" onclick="AfricaMap.selectCountry('${c.country}', true)">
           <div class="marker-ring"></div>
           <div class="marker-dot"></div>
           <div class="marker-tooltip">${c.flag} ${c.country}</div>
@@ -39,7 +39,7 @@ const AfricaMap = {
     let pillsHtml = '';
     this.countries.forEach(c => {
       pillsHtml += `
-        <button class="country-pill-btn" id="pill-${c.country}" onclick="AfricaMap.selectCountry('${c.country}')">
+        <button class="country-pill-btn" id="pill-${c.country}" onclick="AfricaMap.selectCountry('${c.country}', true)">
           ${c.flag} ${c.country}
         </button>
       `;
@@ -47,7 +47,7 @@ const AfricaMap = {
     container.innerHTML = pillsHtml;
   },
 
-  selectCountry(countryName) {
+  selectCountry(countryName, isUserInteraction = false) {
     const country = this.countries.find(c => c.country.toLowerCase() === countryName.toLowerCase());
     if (!country) return;
     this.activeCountry = country;
@@ -62,7 +62,14 @@ const AfricaMap = {
     const activePill = document.getElementById(`pill-${country.country}`);
     if (activePill) {
       activePill.classList.add('active');
-      activePill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      // Only scroll the horizontal pills container if the user explicitly clicked, never moving the window
+      if (isUserInteraction) {
+        const pillsContainer = document.getElementById('countryPillsContainer');
+        if (pillsContainer) {
+          const targetOffset = activePill.offsetLeft - (pillsContainer.clientWidth / 2) + (activePill.clientWidth / 2);
+          pillsContainer.scrollTo({ left: Math.max(0, targetOffset), behavior: 'smooth' });
+        }
+      }
     }
 
     // Update details card

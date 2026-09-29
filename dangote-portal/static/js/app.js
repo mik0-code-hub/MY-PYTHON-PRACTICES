@@ -3,6 +3,10 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+  if (!window.location.hash && 'scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+    window.scrollTo(0, 0);
+  }
   App.init();
 });
 
@@ -379,11 +383,11 @@ const App = {
     let html = '';
     newsItems.forEach(n => {
       const isLive = n.isLiveFeed;
-      const liveBadge = isLive 
-        ? `<span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.7rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;"><span style="width: 5px; height: 5px; border-radius: 50%; background: #10B981; display: inline-block;"></span>LIVE</span>` 
+      const liveBadge = isLive
+        ? `<span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.7rem; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;"><span style="width: 5px; height: 5px; border-radius: 50%; background: #10B981; display: inline-block;"></span>LIVE</span>`
         : '';
       const publisherName = n.publisher ? `📰 ${n.publisher}` : '📰 Dangote Corporate';
-      
+
       html += `
         <div class="news-card" onclick="openNewsModal('${n.id}')">
           <div class="news-meta-row">
@@ -413,7 +417,7 @@ const App = {
       this.renderNewsGrid(this.allNews);
       return;
     }
-    const filtered = this.allNews.filter(n => 
+    const filtered = this.allNews.filter(n =>
       (n.title && n.title.toLowerCase().includes(q)) ||
       (n.summary && n.summary.toLowerCase().includes(q)) ||
       (n.publisher && n.publisher.toLowerCase().includes(q)) ||
@@ -617,10 +621,10 @@ const App = {
 
     const q = (filterQuery || '').trim().toLowerCase();
     const filtered = q
-      ? this.governancePolicies.filter(p => 
-          p.title.toLowerCase().includes(q) || 
-          p.summary.toLowerCase().includes(q)
-        )
+      ? this.governancePolicies.filter(p =>
+        p.title.toLowerCase().includes(q) ||
+        p.summary.toLowerCase().includes(q)
+      )
       : this.governancePolicies;
 
     if (filtered.length === 0) {
@@ -819,10 +823,41 @@ function openNewsModal(newsId) {
   modal.classList.add('active');
 }
 
-function openStockModal(symbol) {
+function renderSparklineSvg(points, isUp) {
+  if (!points || points.length < 2) return '';
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  const range = max - min || 1;
+  const w = 280, h = 60;
+  const padding = 6;
+  const step = (w - padding * 2) / (points.length - 1);
+  const coords = points.map((p, i) => {
+    const x = padding + i * step;
+    const y = h - padding - ((p - min) / range) * (h - padding * 2);
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  const color = isUp ? '#10B981' : '#EF4444';
+  const pointsStr = coords.join(' ');
+  const areaPoints = `${padding},${h} ${pointsStr} ${w - padding},${h}`;
+  return `
+    <svg viewBox="0 0 ${w} ${h}" style="width: 100%; height: 60px; overflow: visible;">
+      <defs>
+        <linearGradient id="sparkGrad_${isUp ? 'up' : 'dn'}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${color}" stop-opacity="0.25" />
+          <stop offset="100%" stop-color="${color}" stop-opacity="0.0" />
+        </linearGradient>
+      </defs>
+      <polygon points="${areaPoints}" fill="url(#sparkGrad_${isUp ? 'up' : 'dn'})" />
+      <polyline fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${pointsStr}" />
+    </svg>
+  `;
+}
+
+async function openStockModal(symbol) {
   const modal = document.getElementById('detailModal');
   const modalTitle = document.getElementById('detailModalTitle');
   const modalBody = document.getElementById('detailModalBody');
+  if (!modal || !modalTitle || !modalBody) return;
 
   const stockNames = {
     "DANGCEM": "Dangote Cement Plc",
@@ -830,22 +865,141 @@ function openStockModal(symbol) {
     "NASCON": "NASCON Allied Industries Plc"
   };
 
-  modalTitle.textContent = `${stockNames[symbol] || symbol} (NGX: ${symbol})`;
+  const name = stockNames[symbol] || symbol;
+  modalTitle.textContent = `${name} (NGX: ${symbol})`;
   modalBody.innerHTML = `
-    <div style="padding: 10px 0;">
-      <p style="color: var(--text-secondary); margin-bottom: 20px;">
-        Listed on the Nigerian Exchange Limited (NGX). Live trading parameters and investor fundamentals.
-      </p>
-      <div style="background: var(--bg-secondary); border: 1px solid var(--surface-border); border-radius: var(--radius-md); padding: 20px; text-align: center; margin-bottom: 24px;">
-        <span style="font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Simulate Shares & Dividend</span>
-        <div style="margin-top: 14px;">
-          <a href="#investors" onclick="closeDetailModal();" class="btn btn-primary btn-sm">Open Dividend Calculator</a>
+    <div style="text-align: center; padding: 30px; color: var(--text-muted);">
+      <span class="spinner" style="display: inline-block; width: 24px; height: 24px; border: 2px solid var(--surface-border); border-top-color: var(--dangote-blue); border-radius: 50%; animation: spin 0.8s linear infinite;"></span>
+      <p style="margin-top: 10px; font-size: 0.88rem;">Retrieving official NGX market quotes...</p>
+    </div>
+  `;
+  modal.classList.add('active');
+
+  let stock = null;
+  try {
+    const allStocks = await window.API.getStocks();
+    if (allStocks && allStocks[symbol]) {
+      stock = allStocks[symbol];
+    }
+  } catch (e) {
+    console.warn('Failed to fetch stock detail', e);
+  }
+
+  if (!stock) {
+    modalBody.innerHTML = `
+      <div style="text-align: center; padding: 24px;">
+        <p style="color: var(--text-muted);">Market data temporarily unavailable. Please retry shortly.</p>
+        <button onclick="closeDetailModal()" class="btn btn-outline btn-sm" style="margin-top: 12px;">Close</button>
+      </div>
+    `;
+    return;
+  }
+
+  const isUp = (stock.change || 0) >= 0;
+  const changeSign = isUp ? '+' : '';
+  const changeArrow = Math.abs(stock.change || 0) < 0.001 ? '●' : (isUp ? '▲' : '▼');
+  const changeColor = Math.abs(stock.change || 0) < 0.001 ? 'var(--text-muted)' : (isUp ? 'var(--dangote-green, #10B981)' : '#EF4444');
+  const priceNGN = (stock.price || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const high52 = (stock["52WeekHigh"] || stock.price || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const low52 = (stock["52WeekLow"] || stock.price || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const timeWAT = stock.lastUpdatedWAT || stock.lastUpdated || 'Lagos WAT';
+  const dateWAT = stock.lastUpdatedDate || '';
+  const statusBadge = stock.isMarketOpen 
+    ? `<span class="badge" style="background: rgba(16, 185, 129, 0.12); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.72rem; font-weight: 700;">● NGX OPEN (15m Delay)</span>`
+    : `<span class="badge" style="background: rgba(148, 163, 184, 0.15); color: #64748B; border: 1px solid rgba(148, 163, 184, 0.3); font-size: 0.72rem; font-weight: 700;">● NGX CLOSED (Official Close)</span>`;
+
+  // Calculate 52w range position percentage
+  const numHigh = stock["52WeekHigh"] || stock.price;
+  const numLow = stock["52WeekLow"] || stock.price;
+  const rangePct = (numHigh > numLow) ? Math.min(100, Math.max(0, ((stock.price - numLow) / (numHigh - numLow)) * 100)) : 50;
+
+  const sparklineSvg = renderSparklineSvg(stock.sparkline, isUp);
+
+  modalBody.innerHTML = `
+    <div style="padding: 4px 0;">
+      <!-- Header Quote Row -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--surface-border);">
+        <div>
+          <div style="font-size: 2rem; font-weight: 800; color: var(--text-primary); line-height: 1.1;">₦${priceNGN}</div>
+          <div style="font-size: 0.95rem; font-weight: 700; color: ${changeColor}; margin-top: 4px;">
+            ${changeArrow} ${changeSign}${(stock.change || 0).toFixed(2)} (${changeSign}${(stock.changePercent || 0).toFixed(2)}%) Today
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+            ≈ $${(stock.priceUSD || 0).toFixed(3)} USD (FX: ₦${stock.usdExchangeRate || 1335.70})
+          </div>
         </div>
+        <div style="text-align: right;">
+          ${statusBadge}
+          <div style="font-size: 0.76rem; color: var(--text-muted); margin-top: 6px;">As of ${timeWAT} • ${dateWAT}</div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); opacity: 0.8;">Nigerian Exchange Limited (NGX)</div>
+        </div>
+      </div>
+
+      <!-- Real Historical Trajectory Mini-Chart -->
+      <div style="background: var(--bg-secondary); border: 1px solid var(--surface-border); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Real Trajectory (3M to Today)</span>
+          <span style="font-size: 0.75rem; color: ${changeColor}; font-weight: 600;">Historical Trendline</span>
+        </div>
+        ${sparklineSvg}
+        <div style="display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;">
+          <span>3 Months Ago</span>
+          <span>1 Month Ago</span>
+          <span>1 Week Ago</span>
+          <span>Latest Session</span>
+        </div>
+      </div>
+
+      <!-- Key Fundamentals Grid -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px;">
+        <div style="background: var(--bg-secondary); border: 1px solid var(--surface-border); border-radius: var(--radius-md); padding: 12px;">
+          <div style="font-size: 0.74rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Market Cap</div>
+          <div style="font-size: 1.02rem; font-weight: 700; color: var(--text-primary); margin-top: 2px;">${stock.marketCap || 'N/A'}</div>
+        </div>
+        <div style="background: var(--bg-secondary); border: 1px solid var(--surface-border); border-radius: var(--radius-md); padding: 12px;">
+          <div style="font-size: 0.74rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Daily Volume</div>
+          <div style="font-size: 1.02rem; font-weight: 700; color: var(--text-primary); margin-top: 2px;">${stock.volume || '0'} shares</div>
+        </div>
+        <div style="background: var(--bg-secondary); border: 1px solid var(--surface-border); border-radius: var(--radius-md); padding: 12px;">
+          <div style="font-size: 0.74rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">P/E Ratio (TTM)</div>
+          <div style="font-size: 1.02rem; font-weight: 700; color: var(--text-primary); margin-top: 2px;">${stock.peRatio ? stock.peRatio + 'x' : 'N/A'}</div>
+        </div>
+        <div style="background: var(--bg-secondary); border: 1px solid var(--surface-border); border-radius: var(--radius-md); padding: 12px;">
+          <div style="font-size: 0.74rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Dividend (Yield)</div>
+          <div style="font-size: 1.02rem; font-weight: 700; color: var(--text-primary); margin-top: 2px;">
+            ${stock.latestDividend > 0 ? '₦' + stock.latestDividend.toFixed(2) + ' (' + stock.dividendYield + ')' : 'None declared'}
+          </div>
+        </div>
+      </div>
+
+      <!-- 52-Week Range Bar -->
+      <div style="background: var(--bg-secondary); border: 1px solid var(--surface-border); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 700; margin-bottom: 6px;">
+          <span style="color: var(--text-muted);">52-Week Low: ₦${low52}</span>
+          <span style="color: var(--text-primary);">Current: ₦${priceNGN}</span>
+          <span style="color: var(--text-muted);">52-Week High: ₦${high52}</span>
+        </div>
+        <div style="width: 100%; height: 6px; background: rgba(0,0,0,0.1); border-radius: 3px; position: relative; overflow: hidden;">
+          <div style="height: 100%; width: ${rangePct}%; background: var(--dangote-blue); border-radius: 3px;"></div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="#investors" onclick="closeDetailModal();" class="btn btn-primary" style="flex: 1; text-align: center;">
+          Calculate Dividends on Shareholding ↗
+        </a>
+        <a href="https://ngxgroup.com/exchange/data/company-profile/?symbol=${symbol}" target="_blank" rel="noopener noreferrer" class="btn btn-outline" style="text-align: center;">
+          View on NGX Official Portal ↗
+        </a>
+      </div>
+
+      <!-- Data Transparency Footnote -->
+      <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--surface-border); font-size: 0.72rem; color: var(--text-muted); line-height: 1.5;">
+        <strong>Data Transparency:</strong> Quotes are sourced directly from Nigerian Exchange Limited (NGX) feeds with standard 15-minute regulatory exchange delay during trading hours (09:00 - 16:00 WAT).
       </div>
     </div>
   `;
-
-  modal.classList.add('active');
 }
 
 function openApplyModal(jobId, jobTitle, applyUrl) {

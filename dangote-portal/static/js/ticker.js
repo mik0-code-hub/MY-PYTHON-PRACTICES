@@ -66,14 +66,28 @@ const StockTicker = {
       divEl.textContent = `₦${data.DANGCEM.latestDividend.toFixed(2)}`;
     }
 
-    // Dynamically update the live ticker tag to reflect actual NGX trading session
+    // Decoupled Market Session & Provider Status Tag
     if (liveTag && firstStock) {
-      if (firstStock.isMarketOpen) {
-        liveTag.innerHTML = '<span class="pulse-dot"></span> LIVE NGX';
-        liveTag.title = 'Nigerian Exchange Regular Trading Session Active (10:00 - 14:30 WAT)';
+      const isMarketOpen = firstStock.isMarketOpen;
+      const providerHealthy = firstStock.providerHealthy !== false;
+      const timeWAT = firstStock.lastUpdatedWAT || firstStock.lastUpdated || '';
+      const sessionDesc = firstStock.sessionDescription || 'Official NGX Trading Schedule (09:00 - 16:00 WAT)';
+
+      if (isMarketOpen) {
+        if (providerHealthy) {
+          liveTag.className = 'ticker-live-tag tag-open';
+          const badgeLabel = firstStock.marketStatus || 'LIVE NGX (15m Delay)';
+          liveTag.innerHTML = `<span class="pulse-dot"></span> ${badgeLabel}`;
+          liveTag.title = `${sessionDesc}. Last update: ${timeWAT}. Quotes provided with official 15-minute exchange delay.`;
+        } else {
+          liveTag.className = 'ticker-live-tag tag-warning';
+          liveTag.innerHTML = '<span class="pulse-dot"></span> NGX OPEN (Data Delay)';
+          liveTag.title = `Nigerian Exchange is open, but market data feed is temporarily delayed/unavailable. Showing last verified closing quotes.`;
+        }
       } else {
-        liveTag.innerHTML = '<span class="pulse-dot" style="background: #94a3b8; box-shadow: none;"></span> NGX CLOSED';
-        liveTag.title = 'Nigerian Exchange is currently closed (Trading hours: Mon-Fri 10:00 - 14:30 WAT). Showing official closing quotes.';
+        liveTag.className = 'ticker-live-tag tag-closed';
+        liveTag.innerHTML = '<span class="pulse-dot"></span> NGX CLOSED';
+        liveTag.title = `Nigerian Exchange is closed (${sessionDesc}). Displaying official closing prices.`;
       }
     }
   }

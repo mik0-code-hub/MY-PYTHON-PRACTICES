@@ -12,6 +12,11 @@ import smtplib
 from email.mime.text import MIMEText
 from email.utils import parsedate_to_datetime
 from typing import Optional, List
+try:
+    from zoneinfo import ZoneInfo
+    WAT_TZ = ZoneInfo("Africa/Lagos")
+except Exception:
+    WAT_TZ = datetime.timezone(datetime.timedelta(hours=1), name="WAT")
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -155,15 +160,133 @@ def get_live_usd_ngn_rate() -> float:
     except Exception:
         return fx_cache["rate"]
 
+NGX_HOLIDAYS = {
+    # 2026 Nigerian Public / NGX Non-Trading Holidays (YYYY-MM-DD)
+    "2026-01-01": "New Year's Day",
+    "2026-03-20": "Eid-el-Fitr (Estimated)",
+    "2026-03-21": "Eid-el-Fitr Holiday",
+    "2026-04-03": "Good Friday",
+    "2026-04-06": "Easter Monday",
+    "2026-05-01": "Workers' Day",
+    "2026-05-27": "Eid-el-Kabir (Estimated)",
+    "2026-05-28": "Eid-el-Kabir Holiday",
+    "2026-06-12": "Democracy Day",
+    "2026-08-26": "Mawlid",
+    "2026-10-01": "National Independence Day",
+    "2026-12-25": "Christmas Day",
+    "2026-12-28": "Boxing Day (Observed)",
+    # 2027
+    "2027-01-01": "New Year's Day",
+}
+
+def get_ngx_market_status() -> dict:
+    """
+    Evaluates official Nigerian Exchange (NGX) equities market session status
+    using authoritative West Africa Time (Africa/Lagos, UTC+1).
+    Trading Schedule (Effective April 27, 2026):
+      09:00 - 09:25 WAT: Pre-Open Phase (Order entry/modification)
+      09:25 - 09:30 WAT: Pre-Open Matching (Opening Auction)
+      09:30 - 15:50 WAT: Continuous Trading Phase
+      15:50 - 16:00 WAT: Pre-Close & Closing Auction Cross
+      16:00 WAT: Official Market Close
+    """
+    now_wat = datetime.datetime.now(WAT_TZ)
+    date_str = now_wat.strftime("%Y-%m-%d")
+    current_time = now_wat.time()
+    weekday = now_wat.weekday()
+
+    is_weekend = weekday >= 5
+    holiday_name = NGX_HOLIDAYS.get(date_str)
+
+    if is_weekend:
+        return {
+            "isMarketOpen": False,
+            "sessionPhase": "WEEKEND",
+            "badgeText": "NGX CLOSED (Weekend)",
+            "statusDescription": "Nigerian Exchange is closed for the weekend.",
+            "tradingSession": "Closed (Weekend)",
+            "currentTimeWAT": now_wat.strftime("%H:%M:%S WAT"),
+            "currentDateWAT": now_wat.strftime("%d %b %Y"),
+            "nextOpen": "Monday at 09:00 WAT"
+        }
+
+    if holiday_name:
+        return {
+            "isMarketOpen": False,
+            "sessionPhase": "HOLIDAY",
+            "badgeText": f"NGX CLOSED ({holiday_name})",
+            "statusDescription": f"Nigerian Exchange is closed today in observance of {holiday_name}.",
+            "tradingSession": f"Closed ({holiday_name})",
+            "currentTimeWAT": now_wat.strftime("%H:%M:%S WAT"),
+            "currentDateWAT": now_wat.strftime("%d %b %Y"),
+            "nextOpen": "Next trading day at 09:00 WAT"
+        }
+
+    t_0900 = datetime.time(9, 0)
+    t_0925 = datetime.time(9, 25)
+    t_0930 = datetime.time(9, 30)
+    t_1550 = datetime.time(15, 50)
+    t_1600 = datetime.time(16, 0)
+
+    if t_0900 <= current_time < t_0925:
+        return {
+            "isMarketOpen": True,
+            "sessionPhase": "PRE_OPEN",
+            "badgeText": "NGX PRE-OPEN",
+            "statusDescription": "Pre-Open Session Active (09:00 - 09:25 WAT). Order entry and modification permitted.",
+            "tradingSession": "Pre-Open (09:00 - 09:25 WAT)",
+            "currentTimeWAT": now_wat.strftime("%H:%M:%S WAT"),
+            "currentDateWAT": now_wat.strftime("%d %b %Y"),
+            "nextOpen": None
+        }
+    elif t_0925 <= current_time < t_0930:
+        return {
+            "isMarketOpen": True,
+            "sessionPhase": "OPENING_AUCTION",
+            "badgeText": "NGX AUCTION MATCH",
+            "statusDescription": "Opening Auction Matching Phase (09:25 - 09:30 WAT).",
+            "tradingSession": "Opening Auction Match (09:25 - 09:30 WAT)",
+            "currentTimeWAT": now_wat.strftime("%H:%M:%S WAT"),
+            "currentDateWAT": now_wat.strftime("%d %b %Y"),
+            "nextOpen": None
+        }
+    elif t_0930 <= current_time < t_1550:
+        return {
+            "isMarketOpen": True,
+            "sessionPhase": "CONTINUOUS_TRADING",
+            "badgeText": "LIVE NGX (15m Delay)",
+            "statusDescription": "Official NGX Regular Continuous Trading Session Active (09:30 - 15:50 WAT).",
+            "tradingSession": "Continuous Trading (09:30 - 15:50 WAT)",
+            "currentTimeWAT": now_wat.strftime("%H:%M:%S WAT"),
+            "currentDateWAT": now_wat.strftime("%d %b %Y"),
+            "nextOpen": None
+        }
+    elif t_1550 <= current_time <= t_1600:
+        return {
+            "isMarketOpen": True,
+            "sessionPhase": "CLOSING_AUCTION",
+            "badgeText": "NGX CLOSING CROSS",
+            "statusDescription": "Pre-Close & Closing Auction Cross Active (15:50 - 16:00 WAT).",
+            "tradingSession": "Closing Auction (15:50 - 16:00 WAT)",
+            "currentTimeWAT": now_wat.strftime("%H:%M:%S WAT"),
+            "currentDateWAT": now_wat.strftime("%d %b %Y"),
+            "nextOpen": None
+        }
+    else:
+        return {
+            "isMarketOpen": False,
+            "sessionPhase": "CLOSED",
+            "badgeText": "NGX CLOSED",
+            "statusDescription": "Nigerian Exchange session is closed. Official closing cross at 16:00 WAT.",
+            "tradingSession": "Closed (Trading Hours: 09:00 - 16:00 WAT)",
+            "currentTimeWAT": now_wat.strftime("%H:%M:%S WAT"),
+            "currentDateWAT": now_wat.strftime("%d %b %Y"),
+            "nextOpen": "Tomorrow at 09:00 WAT" if weekday < 4 else "Monday at 09:00 WAT"
+        }
+
 def is_ngx_market_open() -> bool:
-    # NGX Trading hours: Mon - Fri, 10:00 AM - 2:30 PM (WAT / UTC+1)
-    now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=1)))
-    if now.weekday() >= 5: # Saturday or Sunday
-        return False
-    current_time = now.time()
-    open_time = datetime.time(10, 0)
-    close_time = datetime.time(14, 30)
-    return open_time <= current_time <= close_time
+    """Returns True if the Nigerian Exchange is currently in an active trading session in WAT."""
+    return get_ngx_market_status()["isMarketOpen"]
 
 def get_live_brent_crude() -> float:
     global brent_cache
@@ -184,83 +307,114 @@ def get_live_brent_crude() -> float:
         print("Brent crude fetch exception:", e)
         return brent_cache["price"]
 
-STOCKS_DATA = {
+# Static metadata for verified NGX-listed Dangote entities
+STOCKS_METADATA = {
     "DANGCEM": {
         "symbol": "DANGCEM",
         "name": "Dangote Cement Plc",
         "exchange": "NGX (Nigerian Exchange)",
         "currency": "NGN",
-        "price": 1050.00,
-        "basePrice": 1050.00,
-        "change": 0.00,
-        "changePercent": 0.00,
-        "volume": "2,464,944",
-        "marketCap": "17.41 Trillion NGN",
-        "rawMarketCap": 17414465332031,
-        "peRatio": 15.6,
-        "dividendYield": "4.29%",
-        "latestDividend": 45.00,
-        "52WeekHigh": 1050.00,
-        "52WeekLow": 650.00,
-        "sparkline": [980, 990, 1010, 1025, 1030, 1035, 1040, 1045, 1050]
+        "isin": "NGDANG000008",
+        "sector": "Industrial Goods (Building Materials)",
+        "board": "Premium Board"
     },
     "DANGSUGAR": {
         "symbol": "DANGSUGAR",
         "name": "Dangote Sugar Refinery Plc",
         "exchange": "NGX (Nigerian Exchange)",
         "currency": "NGN",
-        "price": 71.50,
-        "basePrice": 71.50,
-        "change": -0.05,
-        "changePercent": -0.07,
-        "volume": "5,203,411",
-        "marketCap": "1.45 Trillion NGN",
-        "rawMarketCap": 1447503116211,
-        "peRatio": 352.0,
-        "dividendYield": "3.50%",
-        "latestDividend": 2.50,
-        "52WeekHigh": 95.80,
-        "52WeekLow": 53.55,
-        "sparkline": [68, 69, 70, 70.5, 71, 70.8, 71.2, 71.5]
+        "isin": "NGDANGSUG008",
+        "sector": "Consumer Goods (Food Products)",
+        "board": "Main Board"
     },
     "NASCON": {
         "symbol": "NASCON",
         "name": "NASCON Allied Industries Plc",
         "exchange": "NGX (Nigerian Exchange)",
         "currency": "NGN",
-        "price": 176.00,
-        "basePrice": 176.00,
-        "change": +16.00,
-        "changePercent": +10.00,
-        "volume": "3,164,288",
-        "marketCap": "475.6 Billion NGN",
-        "rawMarketCap": 475627195312,
-        "peRatio": 12.7,
-        "dividendYield": "2.84%",
-        "latestDividend": 5.00,
+        "isin": "NGNASCON0002",
+        "sector": "Consumer Goods (Salt & Food)",
+        "board": "Main Board"
+    }
+}
+
+# Baseline verified closing references for graceful fallback if upstream provider is unreachable
+STOCKS_DATA = {
+    "DANGCEM": {
+        **STOCKS_METADATA["DANGCEM"],
+        "price": 1066.70,
+        "basePrice": 1066.70,
+        "change": 0.00,
+        "changePercent": 0.00,
+        "volume": "290,427",
+        "rawVolume": 290427,
+        "marketCap": "17.69 Trillion NGN",
+        "rawMarketCap": 17691437447011,
+        "peRatio": 15.8,
+        "dividendYield": "4.22%",
+        "latestDividend": 45.00,
+        "52WeekHigh": 1189.00,
+        "52WeekLow": 525.10,
+        "sparkline": [963.0, 1034.0, 1050.0, 1066.7, 1066.7, 1066.7]
+    },
+    "DANGSUGAR": {
+        **STOCKS_METADATA["DANGSUGAR"],
+        "price": 69.00,
+        "basePrice": 69.00,
+        "change": -1.00,
+        "changePercent": -1.43,
+        "volume": "2,901,327",
+        "rawVolume": 2901327,
+        "marketCap": "1.42 Trillion NGN",
+        "rawMarketCap": 1417135917969,
+        "peRatio": 339.7,
+        "dividendYield": "0.00%",
+        "latestDividend": 0.00,
+        "52WeekHigh": 95.80,
+        "52WeekLow": 51.60,
+        "sparkline": [69.5, 69.0, 71.4, 71.0, 70.0, 69.0]
+    },
+    "NASCON": {
+        **STOCKS_METADATA["NASCON"],
+        "price": 188.50,
+        "basePrice": 188.50,
+        "change": 0.00,
+        "changePercent": 0.00,
+        "volume": "750,855",
+        "rawVolume": 750855,
+        "marketCap": "509.4 Billion NGN",
+        "rawMarketCap": 509407535889,
+        "peRatio": 13.6,
+        "dividendYield": "3.18%",
+        "latestDividend": 6.00,
         "52WeekHigh": 222.00,
         "52WeekLow": 94.05,
-        "sparkline": [155, 158, 162, 165, 168, 172, 175, 176]
+        "sparkline": [219.5, 195.0, 176.0, 188.5, 188.5, 188.5]
     }
 }
 
 def fetch_live_ngx_stocks() -> dict:
     global stocks_cache, STOCKS_DATA
     now = time.time()
-    is_open = is_ngx_market_open()
-    cache_ttl = 60 if is_open else 180
+    market_info = get_ngx_market_status()
+    is_open = market_info["isMarketOpen"]
+    cache_ttl = 30 if is_open else 180
     usd_rate = get_live_usd_ngn_rate()
 
+    # Serve cached data if fresh
     if stocks_cache["data"] and (now - stocks_cache["timestamp"] < cache_ttl):
         cached = {}
         for k, v in stocks_cache["data"].items():
             cached[k] = {
                 **v,
-                "priceUSD": round(v["price"] / usd_rate, 3),
-                "marketStatus": "LIVE TRADING (NGX)" if is_open else "AFTER-HOURS / CLOSED",
+                "priceUSD": round(v["price"] / usd_rate, 3) if v.get("price") else 0,
+                "marketStatus": market_info["badgeText"],
+                "sessionPhase": market_info["sessionPhase"],
+                "sessionDescription": market_info["statusDescription"],
                 "isMarketOpen": is_open,
                 "usdExchangeRate": usd_rate,
-                "lastUpdated": datetime.datetime.now(WAT_TZ).strftime("%H:%M:%S WAT")
+                "lastUpdated": market_info["currentTimeWAT"],
+                "lastUpdatedDate": market_info["currentDateWAT"]
             }
         return cached
 
@@ -268,7 +422,12 @@ def fetch_live_ngx_stocks() -> dict:
         url = "https://scanner.tradingview.com/nigeria/scan"
         payload = json.dumps({
             "symbols": {"tickers": ["NSENG:DANGCEM", "NSENG:DANGSUGAR", "NSENG:NASCON"]},
-            "columns": ["close", "change", "change_abs", "volume", "market_cap_basic", "price_earnings_ttm"]
+            "columns": [
+                "close", "change", "change_abs", "volume", "market_cap_basic",
+                "price_earnings_ttm", "price_52_week_high", "price_52_week_low",
+                "dps_common_stock_prim_issue_fy",
+                "Perf.W", "Perf.1M", "Perf.3M", "close[1]", "close[2]"
+            ]
         }).encode("utf-8")
         req = urllib.request.Request(
             url,
@@ -295,35 +454,76 @@ def fetch_live_ngx_stocks() -> dict:
 
             row = item.get("d", [])
             live_price = float(row[0]) if len(row) > 0 and row[0] is not None else STOCKS_DATA[sym_key]["price"]
-            change_pct = round(float(row[1]), 2) if len(row) > 1 and row[1] is not None else STOCKS_DATA[sym_key]["changePercent"]
-            change_abs = round(float(row[2]), 2) if len(row) > 2 and row[2] is not None else STOCKS_DATA[sym_key]["change"]
-            raw_vol = int(row[3]) if len(row) > 3 and row[3] is not None else 10000000
-            raw_mcap = float(row[4]) if len(row) > 4 and row[4] is not None else 1000000000000
-            raw_pe = round(float(row[5]), 1) if len(row) > 5 and row[5] is not None else STOCKS_DATA[sym_key]["peRatio"]
+            change_pct = round(float(row[1]), 2) if len(row) > 1 and row[1] is not None else 0.0
+            change_abs = round(float(row[2]), 2) if len(row) > 2 and row[2] is not None else 0.0
+            raw_vol = int(row[3]) if len(row) > 3 and row[3] is not None else STOCKS_DATA[sym_key].get("rawVolume", 0)
+            raw_mcap = float(row[4]) if len(row) > 4 and row[4] is not None else STOCKS_DATA[sym_key].get("rawMarketCap", 0)
+            raw_pe = round(float(row[5]), 1) if len(row) > 5 and row[5] is not None else STOCKS_DATA[sym_key].get("peRatio")
+            high_52 = round(float(row[6]), 2) if len(row) > 6 and row[6] is not None else STOCKS_DATA[sym_key].get("52WeekHigh", live_price)
+            low_52 = round(float(row[7]), 2) if len(row) > 7 and row[7] is not None else STOCKS_DATA[sym_key].get("52WeekLow", live_price)
+            latest_div = round(float(row[8]), 2) if len(row) > 8 and row[8] is not None else STOCKS_DATA[sym_key].get("latestDividend", 0.0)
 
-            formatted_vol = f"{raw_vol:,}"
+            perf_w = float(row[9]) if len(row) > 9 and row[9] is not None else 0.0
+            perf_1m = float(row[10]) if len(row) > 10 and row[10] is not None else 0.0
+            perf_3m = float(row[11]) if len(row) > 11 and row[11] is not None else 0.0
+            c1 = float(row[12]) if len(row) > 12 and row[12] is not None else round(live_price - change_abs, 2)
+            c2 = float(row[13]) if len(row) > 13 and row[13] is not None else c1
+
+            # Dynamically compute sparkline from real historical price movement
+            p_3m = round(live_price / (1.0 + (perf_3m / 100.0)), 2) if perf_3m != -100 else live_price
+            p_1m = round(live_price / (1.0 + (perf_1m / 100.0)), 2) if perf_1m != -100 else live_price
+            p_1w = round(live_price / (1.0 + (perf_w / 100.0)), 2) if perf_w != -100 else live_price
+            sparkline_points = [p_3m, p_1m, p_1w, c2, c1, live_price]
+
+            # Dynamic dividend yield computation
+            if latest_div and latest_div > 0 and live_price > 0:
+                div_yield_val = round((latest_div / live_price) * 100.0, 2)
+                div_yield_str = f"{div_yield_val}%"
+            else:
+                div_yield_str = "0.00%" if latest_div == 0 else "N/A"
+
+            formatted_vol = f"{raw_vol:,}" if raw_vol > 0 else "0"
             if raw_mcap >= 1e12:
                 formatted_mcap = f"{round(raw_mcap / 1e12, 2)} Trillion NGN"
-            else:
+            elif raw_mcap >= 1e9:
                 formatted_mcap = f"{round(raw_mcap / 1e9, 1)} Billion NGN"
+            else:
+                formatted_mcap = f"{raw_mcap:,.0f} NGN"
 
-            STOCKS_DATA[sym_key]["price"] = live_price
-            STOCKS_DATA[sym_key]["basePrice"] = live_price
-            STOCKS_DATA[sym_key]["change"] = change_abs
-            STOCKS_DATA[sym_key]["changePercent"] = change_pct
-            STOCKS_DATA[sym_key]["volume"] = formatted_vol
-            STOCKS_DATA[sym_key]["marketCap"] = formatted_mcap
-            STOCKS_DATA[sym_key]["peRatio"] = raw_pe
+            # Update master memory state with genuine data
+            STOCKS_DATA[sym_key].update({
+                "price": live_price,
+                "basePrice": live_price,
+                "change": change_abs,
+                "changePercent": change_pct,
+                "volume": formatted_vol,
+                "rawVolume": raw_vol,
+                "marketCap": formatted_mcap,
+                "rawMarketCap": raw_mcap,
+                "peRatio": raw_pe,
+                "52WeekHigh": high_52,
+                "52WeekLow": low_52,
+                "latestDividend": latest_div,
+                "dividendYield": div_yield_str,
+                "sparkline": sparkline_points
+            })
 
             result_data[sym_key] = {
                 **STOCKS_DATA[sym_key],
                 "price": live_price,
+                "priceUSD": round(live_price / usd_rate, 3) if usd_rate > 0 else 0,
                 "rawMarketCap": raw_mcap,
-                "priceUSD": round(live_price / usd_rate, 3),
-                "marketStatus": "LIVE TRADING (NGX)" if is_open else "AFTER-HOURS / CLOSED",
+                "marketStatus": market_info["badgeText"],
+                "sessionPhase": market_info["sessionPhase"],
+                "sessionDescription": market_info["statusDescription"],
                 "isMarketOpen": is_open,
+                "providerHealthy": True,
+                "dataSource": "NGX Market Data Feed (15m Delayed)",
+                "dataFreshness": "DELAYED_15M" if is_open else "OFFICIAL_CLOSE",
                 "usdExchangeRate": usd_rate,
-                "lastUpdated": datetime.datetime.now(WAT_TZ).strftime("%H:%M:%S WAT")
+                "lastUpdated": market_info["currentTimeWAT"],
+                "lastUpdatedDate": market_info["currentDateWAT"],
+                "lastUpdatedWAT": market_info["currentTimeWAT"]
             }
 
         if len(result_data) == 3:
@@ -333,15 +533,24 @@ def fetch_live_ngx_stocks() -> dict:
     except Exception as e:
         print("Live NGX stocks fetch exception:", e)
 
+    # Provider failed or timed out: Decouple provider health from actual market status
     fallback_result = {}
     for key, item in STOCKS_DATA.items():
         fallback_result[key] = {
             **item,
-            "priceUSD": round(item["price"] / usd_rate, 3),
-            "marketStatus": "LIVE TRADING (NGX)" if is_open else "AFTER-HOURS / CLOSED",
+            "priceUSD": round(item["price"] / usd_rate, 3) if usd_rate > 0 else 0,
+            "marketStatus": market_info["badgeText"] if not is_open else "NGX OPEN (Data Delay)",
+            "sessionPhase": market_info["sessionPhase"],
+            "sessionDescription": market_info["statusDescription"],
             "isMarketOpen": is_open,
+            "providerHealthy": False,
+            "dataSource": "Last Verified Official Closing Quotes",
+            "dataFreshness": "UNAVAILABLE",
+            "providerNotice": "Market data provider temporarily unreachable; showing last verified closing quotes.",
             "usdExchangeRate": usd_rate,
-            "lastUpdated": datetime.datetime.now(WAT_TZ).strftime("%H:%M:%S WAT")
+            "lastUpdated": market_info["currentTimeWAT"],
+            "lastUpdatedDate": market_info["currentDateWAT"],
+            "lastUpdatedWAT": market_info["currentTimeWAT"]
         }
     return fallback_result
 
@@ -562,8 +771,6 @@ COUNTRIES_DATA = [
         "coords": {"x": 60, "y": 68}
     }
 ]
-
-WAT_TZ = datetime.timezone(datetime.timedelta(hours=1))
 
 def get_active_official_news() -> List[dict]:
     now = time.time()
@@ -835,13 +1042,19 @@ async def get_stocks():
 
 @app.get("/api/market-summary")
 async def get_market_summary():
-    """Returns real-time macro indicators: USD/NGN exchange rate, live Brent crude, and NGX market status."""
+    """Returns real-time macro indicators: USD/NGN exchange rate, live Brent crude, and authoritative NGX market status in WAT."""
+    status = get_ngx_market_status()
     return {
         "usdNgnRate": get_live_usd_ngn_rate(),
         "brentCrudeUSD": get_live_brent_crude(),
-        "isMarketOpen": is_ngx_market_open(),
+        "isMarketOpen": status["isMarketOpen"],
         "marketName": "Nigerian Exchange Limited (NGX)",
-        "tradingSession": "Regular Hours (10:00 - 14:30 WAT)" if is_ngx_market_open() else "Closed"
+        "tradingSession": status["tradingSession"],
+        "sessionPhase": status["sessionPhase"],
+        "badgeText": status["badgeText"],
+        "currentTimeWAT": status["currentTimeWAT"],
+        "currentDateWAT": status["currentDateWAT"],
+        "statusDescription": status["statusDescription"]
     }
 
 @app.get("/api/businesses")

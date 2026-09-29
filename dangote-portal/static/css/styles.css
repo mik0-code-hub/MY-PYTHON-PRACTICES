@@ -298,31 +298,67 @@ ul {
 }
 
 .ticker-live-tag {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: var(--dangote-red);
-  padding: 3px 8px;
-  border-radius: 4px;
+  background: rgba(16, 185, 129, 0.16);
+  color: #10B981;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  padding: 3px 9px;
+  border-radius: 20px;
   font-weight: 700;
-  font-size: 0.7rem;
-  letter-spacing: 0.5px;
+  font-size: 0.72rem;
+  letter-spacing: 0.4px;
   text-transform: uppercase;
   flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.ticker-live-tag.tag-open {
+  background: rgba(16, 185, 129, 0.16);
+  color: #10B981;
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.ticker-live-tag.tag-open .pulse-dot {
+  background: #10B981;
+}
+
+.ticker-live-tag.tag-warning {
+  background: rgba(245, 158, 11, 0.16);
+  color: #F59E0B;
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.ticker-live-tag.tag-warning .pulse-dot {
+  background: #F59E0B;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
+}
+
+.ticker-live-tag.tag-closed {
+  background: rgba(148, 163, 184, 0.14);
+  color: #94A3B8;
+  border-color: rgba(148, 163, 184, 0.25);
+}
+
+.ticker-live-tag.tag-closed .pulse-dot {
+  background: #94A3B8;
+  box-shadow: none;
+  animation: none;
 }
 
 .pulse-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #FFFFFF;
-  animation: pulse-animation 1.5s infinite;
+  background: #10B981;
+  animation: pulse-animation 1.6s infinite;
 }
 
 @keyframes pulse-animation {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7); }
-  70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(255, 255, 255, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1.15); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
 }
 
 .ticker-items-track {
